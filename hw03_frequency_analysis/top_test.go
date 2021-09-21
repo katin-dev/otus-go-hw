@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -42,6 +42,21 @@ var text = `Как видите, он  спускается  по  лестни�
 	иногда,  особенно  когда  папа  дома,  он больше любит тихонько
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
+
+var text2 = `
+Albania Albania
+Chad Chad
+Bahamas Bahamas
+Germany Germany
+Brazil Brazil
+Dominica Dominica
+Canada Canada
+Belarus Belarus
+China China
+Armenia Armenia
+Ecuador Ecuador
+Finland Finland
+`
 
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
@@ -78,5 +93,21 @@ func TestTop10(t *testing.T) {
 			}
 			require.Equal(t, expected, Top10(text))
 		}
+	})
+
+	t.Run("same_freq_limit_10_sort_alpha", func(t *testing.T) {
+		expected := []string{
+			"albania",
+			"armenia",
+			"bahamas",
+			"belarus",
+			"brazil",
+			"canada",
+			"chad",
+			"china",
+			"dominica",
+			"ecuador",
+		}
+		require.Equal(t, expected, Top10(text2))
 	})
 }
