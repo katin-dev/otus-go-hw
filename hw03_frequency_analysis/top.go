@@ -11,7 +11,7 @@ type Dict map[string]int
 var reMatchWord = regexp.MustCompile(`(?m)[\p{L}\d-_]+`)
 
 func Top10(s string) []string {
-	s = strings.Trim(s, " \r\n")
+	s = strings.TrimSpace(s)
 	if s == "" {
 		return nil
 	}
