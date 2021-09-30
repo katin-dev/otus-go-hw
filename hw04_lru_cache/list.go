@@ -84,13 +84,14 @@ func (l *list) Remove(i *ListItem) {
 		return
 	}
 
-	if i == l.front {
+	switch i {
+	case l.front:
 		l.front = i.Next
 		l.front.Prev = nil
-	} else if i == l.back {
+	case l.back:
 		l.back = i.Prev
 		l.back.Next = nil
-	} else {
+	default:
 		i.Next.Prev = i.Prev
 		i.Prev.Next = i.Next
 	}
