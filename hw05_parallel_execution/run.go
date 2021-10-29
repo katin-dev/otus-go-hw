@@ -40,7 +40,7 @@ func Run(tasks []Task, n, m int) error {
 	// Запускаем worker'ов
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go consumer(taskChan, m, &errCounter, &wg)
+		go consumer(taskChan, &errCounter, &wg)
 	}
 
 	// Перекинем все задачи в канал и закроем его
@@ -63,7 +63,7 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func consumer(taskChan <-chan Task, maxErrors int, errCounter *TaskErrorCounter, wg *sync.WaitGroup) {
+func consumer(taskChan <-chan Task, errCounter *TaskErrorCounter, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var err error
 
