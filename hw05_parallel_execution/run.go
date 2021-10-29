@@ -11,13 +11,13 @@ type Task func() error
 
 type TaskErrorCounter struct {
 	sync.Mutex
-	Errors int
+	errors int
 }
 
 func (c *TaskErrorCounter) Inc() int {
 	c.Lock()
-	c.Errors++
-	errors := c.Errors
+	c.errors++
+	errors := c.errors
 	c.Unlock()
 
 	return errors
@@ -25,7 +25,7 @@ func (c *TaskErrorCounter) Inc() int {
 
 func (c *TaskErrorCounter) GetErrors() int {
 	c.Lock()
-	errors := c.Errors
+	errors := c.errors
 	c.Unlock()
 
 	return errors
@@ -56,7 +56,7 @@ func Run(tasks []Task, n, m int) error {
 
 	wg.Wait()
 
-	if m >= 0 && errCounter.Errors >= m {
+	if m >= 0 && errCounter.GetErrors() >= m {
 		return ErrErrorsLimitExceeded
 	}
 
