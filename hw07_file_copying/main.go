@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+
+	"github.com/cheggaaa/pb"
 )
 
 var (
@@ -16,7 +18,27 @@ func init() {
 	flag.Int64Var(&offset, "offset", 0, "offset in input file")
 }
 
+type AppProgressBar struct {
+	bar *pb.ProgressBar
+}
+
+func NewProgressBar() *AppProgressBar {
+	return &AppProgressBar{pb.New(0)}
+}
+
+func (pb *AppProgressBar) Init(total int) {
+	pb.bar.SetTotal(total)
+}
+
+func (pb *AppProgressBar) Increment() {
+	pb.bar.Increment()
+}
+
+func (pb *AppProgressBar) Finish() {
+	pb.bar.Finish()
+}
+
 func main() {
 	flag.Parse()
-	Copy(from, to, offset, limit)
+	Copy(from, to, offset, limit, NewProgressBar())
 }

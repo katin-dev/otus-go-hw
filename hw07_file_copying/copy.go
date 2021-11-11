@@ -6,8 +6,6 @@ import (
 	"io"
 	"math"
 	"os"
-
-	"github.com/cheggaaa/pb"
 )
 
 var (
@@ -19,7 +17,13 @@ var (
 	ErrFailedToOpenDestFile   = errors.New("failed to open source file")
 )
 
-func Copy(fromPath, toPath string, offset, limit int64) error {
+type ProgressBar interface {
+	Init(limit int)
+	Increment()
+	Finish()
+}
+
+func Copy(fromPath, toPath string, offset, limit int64, pb ProgressBar) error {
 	if fromPath == "" {
 		return ErrEmptySourceFilename
 
@@ -65,7 +69,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	// Рассчитаем progress bar - сколько буферов потребуется для копирования файла
 	iterations := int(math.Ceil(float64(bytesToCopy) / float64(bufferSize)))
 
-	bar := pb.StartNew(iterations)
+	pb.Init(iterations)
 	for writtenBytes < bytesToCopy {
 		n := int64(math.Min(float64(bufferSize), float64(bytesToCopy-writtenBytes)))
 		n, err := io.CopyN(dest, source, n)
@@ -75,9 +79,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 		writtenBytes += n
 
-		bar.Increment()
+		pb.Increment()
 	}
 
-	bar.Finish()
+	pb.Finish()
 	return nil
 }
