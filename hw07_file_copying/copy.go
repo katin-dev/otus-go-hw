@@ -9,12 +9,10 @@ import (
 )
 
 var (
-	ErrUnsupportedFile        = errors.New("unsupported file")
-	ErrOffsetExceedsFileSize  = errors.New("offset exceeds file size")
-	ErrEmptySourceFilename    = errors.New("source filename is empty")
-	ErrEmptyDestFilename      = errors.New("destination filename is empty")
-	ErrFailedToOpenSourceFile = errors.New("failed to open source file")
-	ErrFailedToOpenDestFile   = errors.New("failed to open source file")
+	ErrUnsupportedFile       = errors.New("unsupported file")
+	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
+	ErrEmptySourceFilename   = errors.New("source filename is empty")
+	ErrEmptyDestFilename     = errors.New("destination filename is empty")
 )
 
 type ProgressBar interface {
@@ -26,15 +24,15 @@ type ProgressBar interface {
 func Copy(fromPath, toPath string, offset, limit int64, pb ProgressBar) error {
 	if fromPath == "" {
 		return ErrEmptySourceFilename
-
 	}
+
 	if toPath == "" {
 		return ErrEmptyDestFilename
 	}
 
 	source, err := os.Open(fromPath)
 	if err != nil {
-		return fmt.Errorf("failed to open source file %s: %v", fromPath, err)
+		return fmt.Errorf("failed to open source file %s: %w", fromPath, err)
 	}
 	defer source.Close()
 
@@ -49,7 +47,7 @@ func Copy(fromPath, toPath string, offset, limit int64, pb ProgressBar) error {
 
 	dest, err := os.Create(toPath)
 	if err != nil {
-		return fmt.Errorf("failed to open destination file %s: %v", toPath, err)
+		return fmt.Errorf("failed to open destination file %s: %w", toPath, err)
 	}
 	defer dest.Close()
 
@@ -63,7 +61,7 @@ func Copy(fromPath, toPath string, offset, limit int64, pb ProgressBar) error {
 
 	bytesToCopy := stop - start
 
-	var bufferSize int = 4
+	bufferSize := 4
 	var writtenBytes int64
 
 	// Рассчитаем progress bar - сколько буферов потребуется для копирования файла

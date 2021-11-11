@@ -8,23 +8,19 @@ import (
 )
 
 var (
-	source string = "testdata/input.txt"
-	dest   string = "testdata/dest.txt"
+	source = "testdata/input.txt"
+	dest   = "testdata/dest.txt"
 )
 
-type ProgressBarStub struct {
-}
+type ProgressBarStub struct{}
 
 func (pb *ProgressBarStub) Init(total int) {
-
 }
 
 func (pb *ProgressBarStub) Increment() {
-
 }
 
 func (pb *ProgressBarStub) Finish() {
-
 }
 
 func TestCopy(t *testing.T) {
@@ -93,6 +89,7 @@ func TestCopy(t *testing.T) {
 }
 
 func AssertFilesEqual(t *testing.T, expected, actual string) {
+	t.Helper()
 	c1, _ := ioutil.ReadFile(expected)
 	c2, _ := ioutil.ReadFile(actual)
 	require.Equal(t, c1, c2)
