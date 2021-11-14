@@ -55,13 +55,13 @@ func Copy(fromPath, toPath string, offset, limit int64, pb ProgressBar) error {
 
 	start := offset
 	stop := sourceInfo.Size()
-	if limit != 0 {
-		stop = int64(math.Min(float64(start+limit), float64(sourceInfo.Size())))
+	if limit != 0 && start+limit < stop {
+		stop = start + limit
 	}
 
 	bytesToCopy := stop - start
 
-	bufferSize := 4
+	bufferSize := 100
 	var writtenBytes int64
 
 	// Рассчитаем progress bar - сколько буферов потребуется для копирования файла
@@ -69,8 +69,12 @@ func Copy(fromPath, toPath string, offset, limit int64, pb ProgressBar) error {
 
 	pb.Init(iterations)
 	for writtenBytes < bytesToCopy {
-		n := int64(math.Min(float64(bufferSize), float64(bytesToCopy-writtenBytes)))
-		n, err := io.CopyN(dest, source, n)
+		// Копируя файл частями по N байт, нельзя позволить выйти за пределы bytesToCopy
+		if writtenBytes+int64(bufferSize) > bytesToCopy {
+			// На последней итерации придётся уменьшить значение буфера
+			bufferSize = int(bytesToCopy - writtenBytes)
+		}
+		n, err := io.CopyN(dest, source, int64(bufferSize))
 		if err != nil {
 			return err
 		}

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,7 +9,7 @@ import (
 
 var (
 	source = "testdata/input.txt"
-	dest   = "testdata/dest.txt"
+	dest   = ""
 )
 
 type ProgressBarStub struct{}
@@ -24,6 +24,11 @@ func (pb *ProgressBarStub) Finish() {
 }
 
 func TestCopy(t *testing.T) {
+	f, _ := os.CreateTemp("", "resutl")
+	defer os.Remove(f.Name())
+
+	dest = f.Name()
+
 	pb := &ProgressBarStub{}
 
 	t.Run("Empty Source File Name", func(t *testing.T) {
@@ -86,11 +91,17 @@ func TestCopy(t *testing.T) {
 		require.Nil(t, err)
 		AssertFilesEqual(t, "testdata/out_offset6000_limit1000.txt", dest)
 	})
+
+	t.Run("Offset 0 Limit 150", func(t *testing.T) {
+		err := Copy(source, dest, 0, 150, pb)
+		require.Nil(t, err)
+		AssertFilesEqual(t, "testdata/out_offset0_limit150.txt", dest)
+	})
 }
 
 func AssertFilesEqual(t *testing.T, expected, actual string) {
 	t.Helper()
-	c1, _ := ioutil.ReadFile(expected)
-	c2, _ := ioutil.ReadFile(actual)
+	c1, _ := os.ReadFile(expected)
+	c2, _ := os.ReadFile(actual)
 	require.Equal(t, c1, c2)
 }
