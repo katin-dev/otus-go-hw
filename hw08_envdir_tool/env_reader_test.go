@@ -1,21 +1,22 @@
 package main
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 var source = "testdata/env"
 
 func TestReadDir(t *testing.T) {
-	t.Run("Happy Path", func (t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
 		env, err := ReadDir(source)
 		require.Nil(t, err)
 
 		expected := Environment{
-			"BAR": {"bar", false},
+			"BAR":   {"bar", false},
 			"EMPTY": {"", false},
-			"FOO": {"   foo\nwith new line", false},
+			"FOO":   {"   foo\nwith new line", false},
 			"HELLO": {"\"hello\"", false},
 			"UNSET": {"", true},
 		}

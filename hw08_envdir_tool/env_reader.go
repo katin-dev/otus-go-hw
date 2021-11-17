@@ -36,7 +36,7 @@ func ReadDir(dir string) (Environment, error) {
 		val.Value = string(content)
 		val.Value = strings.Split(val.Value, "\n")[0]
 		val.Value = strings.TrimRight(val.Value, " ")
-		val.Value = string(bytes.Replace([]byte(val.Value), []byte{0x00}, []byte{'\n'}, -1))
+		val.Value = string(bytes.ReplaceAll([]byte(val.Value), []byte{0x00}, []byte{'\n'}))
 		env[file.Name()] = val
 	}
 
