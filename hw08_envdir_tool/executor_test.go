@@ -1,7 +1,18 @@
 package main
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestRunCmd(t *testing.T) {
-	// Place your code here
+	t.Run("Return Zero On Empty Command", func(t *testing.T) {
+		code := RunCmd([]string{}, Environment{})
+		assert.Equal(t, 0, code)
+	})
+
+	t.Run("Return Non-Zero Code On Invalid Command", func(t *testing.T) {
+		code := RunCmd([]string{"command-does-not-exists"}, Environment{})
+		assert.Equal(t, 1, code)
+	})
 }
