@@ -3,6 +3,7 @@ package hw09structvalidator
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 type ValidationError struct {
@@ -12,15 +13,35 @@ type ValidationError struct {
 
 type ValidationErrors []ValidationError
 
+func (v ValidationErrors) Length() int {
+	return len(v)
+}
+
 func (v ValidationErrors) Error() string {
 	panic("implement me")
 }
 
 func Validate(v interface{}) error {
-	// 1. Прочитать все поля структуры v (а если там не структура?)
-	return ValidationErrors{
-		ValidationError{"name", fmt.Errorf("Invalid")},
+	errors := make(ValidationErrors, 0)
+
+	vType := reflect.TypeOf(v)
+
+	// Валидировать будем только структуры
+	if vType.Kind() != reflect.Struct {
+		return nil
 	}
+
+	for i := 0; i < vType.NumField(); i++ {
+		f := vType.Field(i)
+		tag := f.Tag
+		fmt.Println(f.Name + " " + string(tag))
+	}
+
+	if errors.Length() == 0 {
+		return nil
+	}
+
+	return errors
 }
 
 var (

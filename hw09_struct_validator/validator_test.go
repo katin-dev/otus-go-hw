@@ -44,6 +44,10 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			"Hello", // Простые типы не валидируем и не ругаемся на них
+			nil,
+		},
+		{
 			User{
 				ID:     "A-10001",
 				Name:   "Test Name",
