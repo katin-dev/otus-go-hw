@@ -36,6 +36,11 @@ type (
 		Code int    `validate:"in:200,404,500"`
 		Body string `json:"omitempty"`
 	}
+
+	ResponseUser struct {
+		Code int  `validate:"in:200,404,500"`
+		User User `validate:"nested"`
+	}
 )
 
 func TestValidate(t *testing.T) {
@@ -107,6 +112,21 @@ func TestValidate(t *testing.T) {
 			Response{503, "Service Temparary Unavailable"},
 			ValidationErrors{
 				ValidationError{"Code", ErrStrEnum},
+			},
+		},
+		{
+			ResponseUser{503, User{ // 503 = invalid
+				ID:     "2265e743", // invalid!
+				Name:   "Test Name",
+				Age:    25,
+				Email:  "katin@gmail.com",
+				Role:   "admin",
+				Phones: []string{"79990001122"},
+				meta:   []byte("{\"is_test\": true}"),
+			}},
+			ValidationErrors{
+				ValidationError{"Code", ErrStrEnum},
+				ValidationError{"ID", ErrStrLen},
 			},
 		},
 	}

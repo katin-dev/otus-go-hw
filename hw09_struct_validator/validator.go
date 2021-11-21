@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+var (
+	ErrStrLen       error = errors.New("string length does not match expected")
+	ErrNumRange     error = errors.New("number is out of range")
+	ErrInvalidEmail error = errors.New("invalid email")
+	ErrStrEnum      error = errors.New("the value is not in allowed enum")
+	ErrRegexp       error = errors.New("the value does not match regexp pattern")
+)
+
 type ValidationError struct {
 	Field string
 	Err   error
@@ -21,7 +29,11 @@ func (v ValidationErrors) Length() int {
 }
 
 func (v ValidationErrors) Error() string {
-	panic("implement me")
+	var messages []string
+	for _, err := range v {
+		messages = append(messages, err.Err.Error())
+	}
+	return strings.Join(messages, "\n")
 }
 
 func Validate(v interface{}) error {
@@ -75,7 +87,11 @@ func Validate(v interface{}) error {
 func validateField(name string, v reflect.Value, validator Validator, errors *ValidationErrors) {
 	validationErr := validator.Validate(v)
 	if validationErr != nil {
-		*errors = append(*errors, ValidationError{name, validationErr})
+		if validationErrors, ok := validationErr.(ValidationErrors); ok {
+			*errors = append(*errors, validationErrors...)
+		} else {
+			*errors = append(*errors, ValidationError{name, validationErr})
+		}
 	}
 }
 
@@ -83,7 +99,8 @@ func isAllowedType(t reflect.Type) bool {
 	return t.Kind() == reflect.Int ||
 		t.Kind() == reflect.String ||
 		t == reflect.SliceOf(reflect.TypeOf("")) ||
-		t == reflect.SliceOf(reflect.TypeOf(1))
+		t == reflect.SliceOf(reflect.TypeOf(1)) ||
+		t.Kind() == reflect.Struct
 }
 
 func parseTag(tag string) ([]Validator, error) {
@@ -101,7 +118,7 @@ func parseTag(tag string) ([]Validator, error) {
 		validatorName := optionParts[0]
 
 		validatorOptionString := ""
-		if len(optionParts) > 0 {
+		if len(optionParts) > 1 {
 			validatorOptionString = optionParts[1]
 		}
 
@@ -119,6 +136,8 @@ func parseTag(tag string) ([]Validator, error) {
 			validator, err = NewRegExpValidator(validatorOptionString)
 		case "in":
 			validator, err = NewStrEnumValidator(validatorOptionString)
+		case "nested":
+			validator, err = NewNestedValidator(validatorOptionString)
 		default:
 			validator = nil
 		}
@@ -277,10 +296,14 @@ func (v *StrEnumValidator) Validate(val reflect.Value) error {
 	return ErrStrEnum
 }
 
-var (
-	ErrStrLen       error = errors.New("string length exceed the limit")
-	ErrNumRange     error = errors.New("number is out of range")
-	ErrInvalidEmail error = errors.New("invalid email")
-	ErrStrEnum      error = errors.New("the value is not in allowed enum")
-	ErrRegexp       error = errors.New("the value does not match regexp pattern")
-)
+type NestedValidator struct{}
+
+func NewNestedValidator(options string) (*NestedValidator, error) {
+	// options = strings.TrimSpace(options)
+
+	return &NestedValidator{}, nil
+}
+
+func (v *NestedValidator) Validate(val reflect.Value) error {
+	return Validate(val.Interface())
+}
