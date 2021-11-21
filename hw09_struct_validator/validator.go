@@ -121,8 +121,6 @@ func NewStrLenValidator(options string) (*StrLenValidator, error) {
 		err    error
 	)
 
-	fmt.Println("Option: ", options)
-
 	if length, err = strconv.Atoi(options); err != nil {
 		return nil, fmt.Errorf("%s is not a number", options)
 	}
@@ -135,6 +133,34 @@ func (v *StrLenValidator) Validate(val reflect.Value) error {
 	fmt.Println("StrLenValidator: ", strVal, v.len)
 	if len(strVal) > v.len {
 		return ErrStrLen
+	}
+
+	return nil
+}
+
+type NumMinvalidator struct {
+	min int64
+}
+
+func NewNumMinValidator(options string) (*NumMinvalidator, error) {
+	options = strings.TrimSpace(options)
+
+	var (
+		num int
+		err error
+	)
+
+	if num, err = strconv.Atoi(options); err != nil {
+		return nil, fmt.Errorf("%s is not a number", options)
+	}
+
+	return &NumMinvalidator{int64(num)}, nil
+}
+
+func (v *NumMinvalidator) Validate(val reflect.Value) error {
+	intVal := val.Int()
+	if intVal < v.min {
+		return ErrNumRange
 	}
 
 	return nil
