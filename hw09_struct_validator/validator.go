@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -52,7 +53,7 @@ func Validate(v interface{}) error {
 				for j := 0; j < vValue.Field(i).Len(); j++ {
 					validationErr := validator.Validate(vValue.Field(i).Index(j))
 					if validationErr != nil {
-						errors = append(errors, ValidationError{f.Name, validationErr})
+						errors = append(errors, ValidationError{f.Name + "." + strconv.Itoa(j), validationErr})
 					}
 				}
 			} else {
@@ -91,13 +92,29 @@ func parseTag(tag string) ([]Validator, error) {
 			validatorOptionString = optionParts[1]
 		}
 
+		var validator Validator
+		var err error
+
 		switch validatorName {
 		case "len":
-			validator, err := NewStrLenValidator(validatorOptionString)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create validator %s: %s", validatorName, err)
-			}
+			validator, err = NewStrLenValidator(validatorOptionString)
+		case "min":
+			validator, err = NewNumMinValidator(validatorOptionString)
+		case "max":
+			validator, err = NewNumMaxValidator(validatorOptionString)
+		case "regexp":
+			validator, err = NewRegExpValidator(validatorOptionString)
+		case "in":
+			validator, err = NewStrEnumValidator(validatorOptionString)
+		default:
+			validator = nil
+		}
 
+		if err != nil {
+			return nil, fmt.Errorf("failed to create validator %s: %s", validatorName, err)
+		}
+
+		if validator != nil {
 			validators = append(validators, validator)
 		}
 	}
@@ -130,7 +147,6 @@ func NewStrLenValidator(options string) (*StrLenValidator, error) {
 
 func (v *StrLenValidator) Validate(val reflect.Value) error {
 	strVal := val.String()
-	fmt.Println("StrLenValidator: ", strVal, v.len)
 	if len(strVal) > v.len {
 		return ErrStrLen
 	}
@@ -166,9 +182,92 @@ func (v *NumMinvalidator) Validate(val reflect.Value) error {
 	return nil
 }
 
+type NumMaxValidator struct {
+	max int64
+}
+
+func NewNumMaxValidator(options string) (*NumMaxValidator, error) {
+	options = strings.TrimSpace(options)
+
+	var (
+		num int
+		err error
+	)
+
+	if num, err = strconv.Atoi(options); err != nil {
+		return nil, fmt.Errorf("%s is not a number", options)
+	}
+
+	return &NumMaxValidator{int64(num)}, nil
+}
+
+func (v *NumMaxValidator) Validate(val reflect.Value) error {
+	intVal := val.Int()
+	if intVal > v.max {
+		return ErrNumRange
+	}
+
+	return nil
+}
+
+type RegExpValidator struct {
+	re *regexp.Regexp
+}
+
+func NewRegExpValidator(options string) (*RegExpValidator, error) {
+	options = strings.TrimSpace(options)
+
+	re, err := regexp.Compile(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse regexp: %s", err)
+	}
+
+	return &RegExpValidator{re}, nil
+}
+
+func (v *RegExpValidator) Validate(val reflect.Value) error {
+	value := val.String()
+
+	if !v.re.Match([]byte(value)) {
+		return ErrRegexp
+	}
+
+	return nil
+}
+
+type StrEnumValidator struct {
+	enums []string
+}
+
+func NewStrEnumValidator(options string) (*StrEnumValidator, error) {
+	options = strings.TrimSpace(options)
+
+	return &StrEnumValidator{strings.Split(options, ",")}, nil
+}
+
+func (v *StrEnumValidator) Validate(val reflect.Value) error {
+	var value string
+
+	if val.Kind() == reflect.Int {
+		value = strconv.Itoa(int(val.Int()))
+	} else {
+		// Для простоты не будем проверять на другие типы
+		value = val.String()
+	}
+
+	for _, expected := range v.enums {
+		if value == expected {
+			return nil
+		}
+	}
+
+	return ErrStrEnum
+}
+
 var (
 	ErrStrLen       error = errors.New("string length exceed the limit")
 	ErrNumRange     error = errors.New("number is out of range")
 	ErrInvalidEmail error = errors.New("invalid email")
 	ErrStrEnum      error = errors.New("the value is not in allowed enum")
+	ErrRegexp       error = errors.New("the value does not match regexp pattern")
 )

@@ -52,7 +52,7 @@ func TestValidate(t *testing.T) {
 				ID:     "A-10001",
 				Name:   "Test Name",
 				Age:    25,
-				Email:  "katin.dev@gmail.com",
+				Email:  "katin@gmail.com",
 				Role:   "admin",
 				Phones: []string{"79990001122"},
 				meta:   []byte("{\"is_test\": true}"),
@@ -72,12 +72,43 @@ func TestValidate(t *testing.T) {
 			ValidationErrors{
 				ValidationError{"ID", ErrStrLen},
 				ValidationError{"Age", ErrNumRange},
-				ValidationError{"Email", ErrInvalidEmail},
+				ValidationError{"Email", ErrRegexp},
 				ValidationError{"Role", ErrStrEnum},
 				ValidationError{"Phones.1", ErrStrLen},
 			},
 		},
-		// @TODO добавить проверки на следующие структуры
+		{
+			App{"1.0.2"},
+			nil,
+		},
+		{
+			App{"1.0.2.6"},
+			ValidationErrors{
+				ValidationError{"Version", ErrStrLen},
+			},
+		},
+		{
+			Token{[]byte{0x01}, []byte{0x02}, []byte{0x03}},
+			nil,
+		},
+		{
+			Response{200, "OK"},
+			nil,
+		},
+		{
+			Response{404, "Not Found"},
+			nil,
+		},
+		{
+			Response{500, "Internal Server Error"},
+			nil,
+		},
+		{
+			Response{503, "Service Temparary Unavailable"},
+			ValidationErrors{
+				ValidationError{"Code", ErrStrEnum},
+			},
+		},
 	}
 
 	for i, tt := range tests {
