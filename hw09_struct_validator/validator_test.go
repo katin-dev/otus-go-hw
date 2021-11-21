@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -42,10 +44,36 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			User{
+				ID:     "A-10001",
+				Name:   "Test Name",
+				Age:    25,
+				Email:  "katin.dev@gmail.com",
+				Role:   "admin",
+				Phones: []string{"+79990001122"},
+				meta:   []byte("{\"is_test\": true}"),
+			},
+			nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			User{
+				ID:     "0000000000000000000000000000001111111", // 37 symbols
+				Name:   "Test",
+				Age:    16,                                      // < 18
+				Email:  "some-invalid-email@",                   // invalid email
+				Role:   "invalid_role",                          // not in enum
+				Phones: []string{"79990001122", "+79990001122"}, // 2nd email is invalid: len > 11
+				meta:   []byte("{\"is_test\": true}"),
+			},
+			ValidationErrors{
+				ValidationError{"ID", ErrStrLen},
+				ValidationError{"Age", ErrNumRange},
+				ValidationError{"Email", ErrInvalidEmail},
+				ValidationError{"Role", ErrStrEnum},
+				ValidationError{"Phones.1", ErrStrLen},
+			},
+		},
+		// @TODO добавить проверки на следующие структуры
 	}
 
 	for i, tt := range tests {
@@ -53,8 +81,12 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			if tt.expectedErr != nil {
+				require.Equal(t, tt.expectedErr, err)
+			} else {
+				require.Nil(t, err)
+			}
 		})
 	}
 }
