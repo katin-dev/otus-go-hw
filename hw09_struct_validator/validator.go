@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	ErrStrLen       error = errors.New("string length does not match expected")
-	ErrNumRange     error = errors.New("number is out of range")
-	ErrInvalidEmail error = errors.New("invalid email")
-	ErrStrEnum      error = errors.New("the value is not in allowed enum")
-	ErrRegexp       error = errors.New("the value does not match regexp pattern")
+	ErrStrLen       = errors.New("string length does not match expected")
+	ErrNumRange     = errors.New("number is out of range")
+	ErrInvalidEmail = errors.New("invalid email")
+	ErrStrEnum      = errors.New("the value is not in allowed enum")
+	ErrRegexp       = errors.New("the value does not match regexp pattern")
 )
 
 type ValidationError struct {
@@ -29,7 +29,7 @@ func (v ValidationErrors) Length() int {
 }
 
 func (v ValidationErrors) Error() string {
-	var messages []string
+	messages := make([]string, 0)
 	for _, err := range v {
 		messages = append(messages, err.Err.Error())
 	}
@@ -74,7 +74,6 @@ func Validate(v interface{}) error {
 				validateField(f.Name, v, validator, &errors)
 			}
 		}
-
 	}
 
 	if errors.Length() == 0 {
@@ -84,13 +83,14 @@ func Validate(v interface{}) error {
 	return errors
 }
 
-func validateField(name string, v reflect.Value, validator Validator, errors *ValidationErrors) {
+func validateField(name string, v reflect.Value, validator Validator, errorBucket *ValidationErrors) {
 	validationErr := validator.Validate(v)
 	if validationErr != nil {
-		if validationErrors, ok := validationErr.(ValidationErrors); ok {
-			*errors = append(*errors, validationErrors...)
+		var va ValidationErrors
+		if errors.As(validationErr, &va) {
+			*errorBucket = append(*errorBucket, va...)
 		} else {
-			*errors = append(*errors, ValidationError{name, validationErr})
+			*errorBucket = append(*errorBucket, ValidationError{name, validationErr})
 		}
 	}
 }
@@ -108,7 +108,6 @@ func parseTag(tag string) ([]Validator, error) {
 
 	parts := strings.Split(tag, "|")
 	for _, part := range parts {
-
 		optionParts := strings.Split(part, ":")
 
 		if len(optionParts) == 0 {
@@ -143,7 +142,7 @@ func parseTag(tag string) ([]Validator, error) {
 		}
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to create validator %s: %s", validatorName, err)
+			return nil, fmt.Errorf("failed to create validator %s: %w", validatorName, err)
 		}
 
 		if validator != nil {
@@ -206,8 +205,7 @@ func NewNumMinValidator(options string) (*NumMinvalidator, error) {
 }
 
 func (v *NumMinvalidator) Validate(val reflect.Value) error {
-	intVal := val.Int()
-	if intVal < v.min {
+	if intVal := val.Int(); intVal < v.min {
 		return ErrNumRange
 	}
 
@@ -234,8 +232,7 @@ func NewNumMaxValidator(options string) (*NumMaxValidator, error) {
 }
 
 func (v *NumMaxValidator) Validate(val reflect.Value) error {
-	intVal := val.Int()
-	if intVal > v.max {
+	if intVal := val.Int(); intVal > v.max {
 		return ErrNumRange
 	}
 
@@ -251,7 +248,7 @@ func NewRegExpValidator(options string) (*RegExpValidator, error) {
 
 	re, err := regexp.Compile(options)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse regexp: %s", err)
+		return nil, fmt.Errorf("failed to parse regexp: %w", err)
 	}
 
 	return &RegExpValidator{re}, nil
