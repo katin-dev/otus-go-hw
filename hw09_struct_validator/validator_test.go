@@ -54,7 +54,7 @@ func TestValidate(t *testing.T) {
 				Age:    25,
 				Email:  "katin.dev@gmail.com",
 				Role:   "admin",
-				Phones: []string{"+79990001122"},
+				Phones: []string{"79990001122"},
 				meta:   []byte("{\"is_test\": true}"),
 			},
 			nil,

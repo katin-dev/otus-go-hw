@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 type ValidationError struct {
@@ -25,6 +27,7 @@ func Validate(v interface{}) error {
 	errors := make(ValidationErrors, 0)
 
 	vType := reflect.TypeOf(v)
+	vValue := reflect.ValueOf(v)
 
 	// Валидировать будем только структуры
 	if vType.Kind() != reflect.Struct {
@@ -33,8 +36,33 @@ func Validate(v interface{}) error {
 
 	for i := 0; i < vType.NumField(); i++ {
 		f := vType.Field(i)
-		tag := f.Tag
-		fmt.Println(f.Name + " " + string(tag))
+		tag := f.Tag.Get("validate")
+
+		if tag == "" {
+			continue
+		}
+
+		validators, err := parseTag(tag)
+		if err != nil {
+			return err
+		}
+
+		for _, validator := range validators {
+			if f.Type.Kind() == reflect.Slice {
+				for j := 0; j < vValue.Field(i).Len(); j++ {
+					validationErr := validator.Validate(vValue.Field(i).Index(j))
+					if validationErr != nil {
+						errors = append(errors, ValidationError{f.Name, validationErr})
+					}
+				}
+			} else {
+				validationErr := validator.Validate(vValue.Field(i))
+				if validationErr != nil {
+					errors = append(errors, ValidationError{f.Name, validationErr})
+				}
+			}
+		}
+
 	}
 
 	if errors.Length() == 0 {
@@ -42,6 +70,74 @@ func Validate(v interface{}) error {
 	}
 
 	return errors
+}
+
+func parseTag(tag string) ([]Validator, error) {
+	validators := make([]Validator, 0)
+
+	parts := strings.Split(tag, "|")
+	for _, part := range parts {
+
+		optionParts := strings.Split(part, ":")
+
+		if len(optionParts) == 0 {
+			return nil, fmt.Errorf("failed to parse validator: " + part)
+		}
+
+		validatorName := optionParts[0]
+
+		validatorOptionString := ""
+		if len(optionParts) > 0 {
+			validatorOptionString = optionParts[1]
+		}
+
+		switch validatorName {
+		case "len":
+			validator, err := NewStrLenValidator(validatorOptionString)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create validator %s: %s", validatorName, err)
+			}
+
+			validators = append(validators, validator)
+		}
+	}
+
+	return validators, nil
+}
+
+type Validator interface {
+	Validate(v reflect.Value) error
+}
+
+type StrLenValidator struct {
+	len int
+}
+
+func NewStrLenValidator(options string) (*StrLenValidator, error) {
+	options = strings.TrimSpace(options)
+
+	var (
+		length int
+		err    error
+	)
+
+	fmt.Println("Option: ", options)
+
+	if length, err = strconv.Atoi(options); err != nil {
+		return nil, fmt.Errorf("%s is not a number", options)
+	}
+
+	return &StrLenValidator{length}, nil
+}
+
+func (v *StrLenValidator) Validate(val reflect.Value) error {
+	strVal := val.String()
+	fmt.Println("StrLenValidator: ", strVal, v.len)
+	if len(strVal) > v.len {
+		return ErrStrLen
+	}
+
+	return nil
 }
 
 var (
