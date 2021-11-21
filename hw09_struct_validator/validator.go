@@ -37,9 +37,14 @@ func Validate(v interface{}) error {
 
 	for i := 0; i < vType.NumField(); i++ {
 		f := vType.Field(i)
+		v := vValue.Field(i)
 		tag := f.Tag.Get("validate")
 
 		if tag == "" {
+			continue
+		}
+
+		if !isAllowedType(f.Type) {
 			continue
 		}
 
@@ -51,16 +56,10 @@ func Validate(v interface{}) error {
 		for _, validator := range validators {
 			if f.Type.Kind() == reflect.Slice {
 				for j := 0; j < vValue.Field(i).Len(); j++ {
-					validationErr := validator.Validate(vValue.Field(i).Index(j))
-					if validationErr != nil {
-						errors = append(errors, ValidationError{f.Name + "." + strconv.Itoa(j), validationErr})
-					}
+					validateField(f.Name+"."+strconv.Itoa(j), vValue.Field(i).Index(j), validator, &errors)
 				}
 			} else {
-				validationErr := validator.Validate(vValue.Field(i))
-				if validationErr != nil {
-					errors = append(errors, ValidationError{f.Name, validationErr})
-				}
+				validateField(f.Name, v, validator, &errors)
 			}
 		}
 
@@ -71,6 +70,20 @@ func Validate(v interface{}) error {
 	}
 
 	return errors
+}
+
+func validateField(name string, v reflect.Value, validator Validator, errors *ValidationErrors) {
+	validationErr := validator.Validate(v)
+	if validationErr != nil {
+		*errors = append(*errors, ValidationError{name, validationErr})
+	}
+}
+
+func isAllowedType(t reflect.Type) bool {
+	return t.Kind() == reflect.Int ||
+		t.Kind() == reflect.String ||
+		t == reflect.SliceOf(reflect.TypeOf("")) ||
+		t == reflect.SliceOf(reflect.TypeOf(1))
 }
 
 func parseTag(tag string) ([]Validator, error) {
@@ -147,7 +160,7 @@ func NewStrLenValidator(options string) (*StrLenValidator, error) {
 
 func (v *StrLenValidator) Validate(val reflect.Value) error {
 	strVal := val.String()
-	if len(strVal) > v.len {
+	if len(strVal) != v.len {
 		return ErrStrLen
 	}
 

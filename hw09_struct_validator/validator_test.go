@@ -49,7 +49,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			User{
-				ID:     "A-10001",
+				ID:     "2265e743-32ba-4264-8b33-5908afd2978b",
 				Name:   "Test Name",
 				Age:    25,
 				Email:  "katin@gmail.com",
@@ -61,7 +61,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			User{
-				ID:     "0000000000000000000000000000001111111", // 37 symbols
+				ID:     "5908afd2978b", // len != 36
 				Name:   "Test",
 				Age:    16,                                      // < 18
 				Email:  "some-invalid-email@",                   // invalid email
