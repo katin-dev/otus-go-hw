@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+const exitError = 1
+
 func main() {
 	args := os.Args
 	if len(args) < 3 {
@@ -13,7 +15,8 @@ func main() {
 
 	env, err := ReadDir(args[1])
 	if err != nil {
-		panic("Failed to read '" + args[1] + "': " + err.Error())
+		fmt.Printf("ERR: failed to read %s: %s", args[1], err.Error())
+		os.Exit(exitError)
 	}
 
 	code := RunCmd(args[2:], env)

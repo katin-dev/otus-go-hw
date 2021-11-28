@@ -2,9 +2,8 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
-	"strings"
+	"path"
 )
 
 type Environment map[string]EnvValue
@@ -18,25 +17,37 @@ type EnvValue struct {
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
 	env := make(Environment)
 	for _, file := range files {
+		fileInfo, err := file.Info()
+		if err != nil {
+			return nil, err
+		}
+
 		val := EnvValue{}
-		if file.Size() == 0 {
+
+		if fileInfo.Size() == 0 {
 			val.NeedRemove = true
 			env[file.Name()] = val
 			continue
 		}
 
-		content, _ := os.ReadFile(dir + string(os.PathSeparator) + file.Name())
+		content, err := os.ReadFile(path.Join(dir, file.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		content = bytes.Split(content, []byte("\n"))[0]
+		content = bytes.TrimRight(content, " ")
+		content = bytes.ReplaceAll(content, []byte{0x00}, []byte{'\n'})
+
 		val.Value = string(content)
-		val.Value = strings.Split(val.Value, "\n")[0]
-		val.Value = strings.TrimRight(val.Value, " ")
-		val.Value = string(bytes.ReplaceAll([]byte(val.Value), []byte{0x00}, []byte{'\n'}))
+
 		env[file.Name()] = val
 	}
 
