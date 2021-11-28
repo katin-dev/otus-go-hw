@@ -27,9 +27,10 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	for varName := range env {
 		if env[varName].NeedRemove {
 			delete(envVars, varName)
-		} else {
-			envVars[varName] = env[varName].Value
+			continue
 		}
+
+		envVars[varName] = env[varName].Value
 	}
 
 	// Convert map to []strings
