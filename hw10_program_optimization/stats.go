@@ -2,10 +2,13 @@ package hw10programoptimization
 
 import (
 	"bufio"
-	"encoding/json"
 	"io"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type User struct {
 	ID       int
@@ -26,13 +29,12 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 
 	scanner := bufio.NewScanner(r)
 
-	// rx := regexp.MustCompile("\\." + domain)
-	subDomain := "." + domain
+	subDomain := "." + strings.ToLower(domain)
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Сразу откинем очевидно ненужные строки
+		// Сразу откинем очевидно ненужные строки ещё до unmarshall
 		if !strings.Contains(line, subDomain) {
 			continue
 		}
@@ -43,6 +45,11 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 		}
 
 		userEmailDomain := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+
+		// Контрольная проверка: домен должен заканчиваться на указанный поддомен
+		if !strings.HasSuffix(userEmailDomain, subDomain) {
+			continue
+		}
 
 		result[userEmailDomain]++
 	}
