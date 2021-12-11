@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"net"
@@ -17,7 +16,7 @@ type TelnetClient interface {
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
 	return &SimpleTelnet{
-		address, timeout, in, out, nil, nil, nil,
+		address, timeout, in, out, nil,
 	}
 }
 
@@ -29,8 +28,6 @@ type SimpleTelnet struct {
 	in      io.ReadCloser
 	out     io.Writer
 	con     net.Conn
-	inScan  *bufio.Scanner
-	conScan *bufio.Scanner
 }
 
 func (c *SimpleTelnet) Connect() error {
@@ -41,9 +38,6 @@ func (c *SimpleTelnet) Connect() error {
 
 	c.con = con
 
-	c.inScan = bufio.NewScanner(c.in)
-	c.conScan = bufio.NewScanner(c.con)
-
 	return nil
 }
 
@@ -52,12 +46,7 @@ func (c *SimpleTelnet) Send() error {
 		return fmt.Errorf("connection is not established")
 	}
 
-	var err error
-	if c.inScan.Scan() {
-		_, err = c.con.Write([]byte(c.inScan.Text() + "\n"))
-	} else {
-		c.Close()
-	}
+	_, err := io.Copy(c.con, c.in)
 
 	return err
 }
@@ -67,12 +56,9 @@ func (c *SimpleTelnet) Receive() error {
 		return fmt.Errorf("connection is not established")
 	}
 
-	if c.conScan.Scan() {
-		c.out.Write([]byte(c.conScan.Text() + "\n"))
-		return nil
-	}
+	_, err := io.Copy(c.out, c.con)
 
-	return fmt.Errorf("failed to read from remote server")
+	return err
 }
 
 func (c *SimpleTelnet) Close() error {

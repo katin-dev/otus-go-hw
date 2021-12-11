@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 
 	flag "github.com/spf13/pflag"
 )
@@ -32,44 +32,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	ctx, ctxCancel := signal.NotifyContext(context.Background(), os.Interrupt)
+
 	go func() {
-		for range c {
+		if err := t.Send(); err != nil {
 			t.Close()
-		}
-	}()
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		var err error
-		for {
-			err = t.Send()
-			if err != nil {
-				t.Close()
-				log.Printf("stdin closed: %s\n", err)
-				return
-			}
+			ctxCancel()
+			log.Printf("stdin closed: %s\n", err)
+			return
 		}
 	}()
 
 	go func() {
-		defer wg.Done()
-		var err error
-		for {
-			err = t.Receive()
-			if err != nil {
-				os.Stdin.Close()
-				log.Printf("connection colsed: %s\n", err)
-				return
-			}
+		if err := t.Receive(); err != nil {
+			os.Stdin.Close()
+			ctxCancel()
+			log.Printf("connection colsed: %s\n", err)
+			return
 		}
 	}()
 
-	wg.Wait()
+	<-ctx.Done()
 
 	// Place your code here,
 	// P.S. Do not rush to throw context down, think think if it is useful with blocking operation?
