@@ -1,0 +1,6 @@
+logger:
+  level: INFO
+  file: logs/calendar.log
+
+# TODO
+# ...

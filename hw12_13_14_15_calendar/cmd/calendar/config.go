@@ -10,7 +10,7 @@ type Config struct {
 
 type LoggerConf struct {
 	Level string
-	// TODO
+	File  string
 }
 
 func NewConfig() Config {
