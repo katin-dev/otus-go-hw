@@ -32,13 +32,13 @@ func main() {
 		return
 	}
 
-	// Конфигурация приложения:
+	// Init: App Config
 	config, err := loadConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to read config: %s", err)
 	}
 
-	// Настройка логгера
+	// Init: Logger
 	logFile, err := filepath.Abs(config.Logger.File)
 	if err != nil {
 		log.Fatalf("Invalid log file name: %s: %s", config.Logger.File, err)
@@ -50,10 +50,17 @@ func main() {
 		log.Fatalf("Failed to create logger: %s", err)
 	}
 
-	logg.Debug("Hello, World")
-	os.Exit(0)
+	// Init: Storage
+	var storage app.Storage
+	switch config.Storage.Type {
+	case STORAGE_MEMORY:
+		storage = memorystorage.New()
+	case STORAGE_SQL:
+		storage = sqlstorage.New()
+	default:
+		log.Fatalf("Unknown storage type: %s\n", config.Storage.Type)
+	}
 
-	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)

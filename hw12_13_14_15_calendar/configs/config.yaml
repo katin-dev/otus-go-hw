@@ -1,3 +1,5 @@
 logger:
   env: dev
   file: logs/app.log
+storage:
+  type: memory
