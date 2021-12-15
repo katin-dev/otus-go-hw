@@ -21,7 +21,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -44,7 +44,10 @@ func main() {
 		log.Fatalf("Invalid log file name: %s: %s", config.Logger.File, err)
 	}
 
-	logg := logger.New(config.Logger.Level, logFile)
+	logg, err := logger.New(logFile, config.Logger.Env)
+	if err != nil {
+		log.Fatalf("Failed to create logger: %s", err)
+	}
 
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)

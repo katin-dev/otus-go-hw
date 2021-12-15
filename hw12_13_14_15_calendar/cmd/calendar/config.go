@@ -9,8 +9,8 @@ type Config struct {
 }
 
 type LoggerConf struct {
-	Level string
-	File  string
+	Env  string
+	File string
 }
 
 func NewConfig() Config {

@@ -1,6 +1,7 @@
 logger:
-  level: INFO
-  file: logs/calendar.log
+  env: dev
+  file: logs/app.log
+  # file: stdout
 
 # TODO
 # ...
