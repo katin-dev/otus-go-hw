@@ -1,7 +1,3 @@
 logger:
   env: dev
   file: logs/app.log
-  # file: stdout
-
-# TODO
-# ...

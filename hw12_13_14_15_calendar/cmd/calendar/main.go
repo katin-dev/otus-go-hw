@@ -45,9 +45,13 @@ func main() {
 	}
 
 	logg, err := logger.New(logFile, config.Logger.Env)
+	defer logg.Flush()
 	if err != nil {
 		log.Fatalf("Failed to create logger: %s", err)
 	}
+
+	logg.Debug("Hello, World")
+	os.Exit(0)
 
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)

@@ -2,8 +2,10 @@ package logger
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -29,6 +31,8 @@ func New(file, env string) (*Logger, error) {
 	}
 
 	cfg.OutputPaths = []string{file}
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
 
 	zapLogger, err := cfg.Build()
 	if err != nil {
@@ -57,4 +61,8 @@ func (l *Logger) Warn(msg string, params ...interface{}) {
 
 func (l *Logger) Error(msg string, params ...interface{}) {
 	l.logg.Errorw(msg, params...)
+}
+
+func (l *Logger) Flush() {
+	l.logg.Sync()
 }
