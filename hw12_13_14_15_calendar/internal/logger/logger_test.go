@@ -30,8 +30,8 @@ func TestLogger(t *testing.T) {
 		l.Flush()
 
 		logContent, _ := os.ReadFile(file.Name())
-		logExpected := nowStr + "\tDEBUG\tlogger/logger.go:51\tDEBUG\t{\"param\": 1}\n" +
-			nowStr + "\tINFO\tlogger/logger.go:55\tINFO\t{\"param\": 2}\n"
+		logExpected := nowStr + "\tDEBUG\tlogger/logger.go:52\tDEBUG\t{\"param\": 1}\n" +
+			nowStr + "\tINFO\tlogger/logger.go:56\tINFO\t{\"param\": 2}\n"
 
 		require.Equal(t, logExpected, string(logContent))
 	})
@@ -54,7 +54,7 @@ func TestLogger(t *testing.T) {
 		// file.Close()
 		logContent, _ := os.ReadFile(file.Name())
 		fmt.Println(string(logContent))
-		logExpected := "{\"level\":\"info\",\"timestamp\":\"" + nowStr + "\",\"caller\":\"logger/logger.go:55\",\"msg\":\"INFO\",\"param\":2}\n"
+		logExpected := "{\"level\":\"info\",\"timestamp\":\"" + nowStr + "\",\"caller\":\"logger/logger.go:56\",\"msg\":\"INFO\",\"param\":2}\n"
 
 		require.Equal(t, logExpected, string(logContent))
 	})

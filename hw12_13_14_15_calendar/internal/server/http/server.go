@@ -2,30 +2,60 @@ package internalhttp
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"strconv"
 )
 
-type Server struct { // TODO
+type Server struct {
+	host   string
+	port   int
+	logger Logger
+	server *http.Server
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Info(msg string, params ...interface{})
+	LogHttpRequest(r *http.Request, code, length int)
 }
 
-type Application interface { // TODO
+type Application interface{}
+
+func NewServer(logger Logger, app Application, host string, port int) *Server {
+	myServer := &Server{
+		host:   host,
+		port:   port,
+		logger: logger,
+		server: nil,
+	}
+
+	httpServer := &http.Server{
+		Addr:    net.JoinHostPort(host, strconv.Itoa(port)),
+		Handler: loggingMiddleware(http.HandlerFunc(myServer.handleHttp), logger),
+	}
+
+	myServer.server = httpServer
+
+	return myServer
 }
 
-func NewServer(logger Logger, app Application) *Server {
-	return &Server{}
+func (s *Server) handleHttp(w http.ResponseWriter, r *http.Request) {
+	msg := []byte("Hello, world!\n")
+	w.WriteHeader(200)
+	w.Write(msg)
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	// TODO
-	<-ctx.Done()
+	s.logger.Info("Start HTTP Server", "host", s.host, "port", s.port)
+	err := s.server.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	// TODO
+	s.server.Shutdown(ctx)
 	return nil
 }
-
-// TODO

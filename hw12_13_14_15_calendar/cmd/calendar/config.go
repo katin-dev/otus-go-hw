@@ -6,6 +6,7 @@ package main
 type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
+	Http    HttpConf
 }
 
 type LoggerConf struct {
@@ -23,8 +24,11 @@ type StorageConf struct {
 	Dsn  string
 }
 
+type HttpConf struct {
+	Host string
+	Port int
+}
+
 func NewConfig() Config {
 	return Config{}
 }
-
-// TODO

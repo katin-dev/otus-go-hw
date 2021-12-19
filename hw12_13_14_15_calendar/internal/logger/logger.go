@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"go.uber.org/zap"
@@ -61,6 +62,19 @@ func (l *Logger) Warn(msg string, params ...interface{}) {
 
 func (l *Logger) Error(msg string, params ...interface{}) {
 	l.logg.Errorw(msg, params...)
+}
+
+func (l *Logger) LogHttpRequest(r *http.Request, code, length int) {
+	l.logg.Infof(
+		"%s\t%s\t%s\t%s\t%d\t%d\t\"%s\"",
+		r.RemoteAddr,
+		r.Method,
+		r.URL.String(),
+		r.Proto,
+		code,
+		length,
+		r.UserAgent(),
+	)
 }
 
 func (l *Logger) Flush() {
