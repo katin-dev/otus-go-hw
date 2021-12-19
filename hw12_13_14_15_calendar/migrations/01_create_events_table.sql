@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE events (
     id VARCHAR(255) NOT NULL,
     title VARCHAR(500) NOT NULL,
@@ -8,4 +9,5 @@ CREATE TABLE events (
     notify_before INT NOT NULL DEFAULT 0
 );
 
--- CREATE INDEX ON events.date;
+-- +goose Down
+DROP TABLE events;
