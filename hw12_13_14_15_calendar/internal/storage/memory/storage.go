@@ -18,29 +18,35 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Create(e app.Event) {
+func (s *Storage) Create(e app.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.events[e.Id] = e
+
+	return nil
 }
 
-func (s *Storage) Update(e app.Event) {
+func (s *Storage) Update(e app.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.events[e.Id] = e
+
+	return nil
 }
 
-func (s *Storage) Delete(id uuid.UUID) {
+func (s *Storage) Delete(id uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.events, id)
+
+	return nil
 }
 
-func (s *Storage) FindAll() []app.Event {
+func (s *Storage) FindAll() ([]app.Event, error) {
 	events := make([]app.Event, 0, len(s.events))
 	for _, v := range s.events {
 		events = append(events, v)
 	}
 
-	return events
+	return events, nil
 }

@@ -3,3 +3,4 @@ logger:
   file: logs/app.log
 storage:
   type: memory
+  dsn: postgres://calendar:calendar@localhost:5434/calendar

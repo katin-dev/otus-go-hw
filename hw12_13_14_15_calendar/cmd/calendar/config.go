@@ -20,6 +20,7 @@ const (
 
 type StorageConf struct {
 	Type string
+	Dsn  string
 }
 
 func NewConfig() Config {

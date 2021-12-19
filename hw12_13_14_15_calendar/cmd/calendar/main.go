@@ -15,6 +15,7 @@ import (
 	"github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/storage/sql"
 	"gopkg.in/yaml.v2"
 )
 
@@ -50,13 +51,17 @@ func main() {
 		log.Fatalf("Failed to create logger: %s", err)
 	}
 
+	ctx, cancel := signal.NotifyContext(context.Background(),
+		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
 	// Init: Storage
 	var storage app.Storage
 	switch config.Storage.Type {
 	case STORAGE_MEMORY:
 		storage = memorystorage.New()
 	case STORAGE_SQL:
-		storage = sqlstorage.New()
+		storage = sqlstorage.New(ctx, config.Storage.Dsn)
 	default:
 		log.Fatalf("Unknown storage type: %s\n", config.Storage.Type)
 	}
@@ -64,10 +69,6 @@ func main() {
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)
-
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
 
 	go func() {
 		<-ctx.Done()
