@@ -45,8 +45,7 @@ func main() {
 		log.Fatalf("Invalid log file name: %s: %s", config.Logger.File, err)
 	}
 
-	logg, err := logger.New(logFile, config.Logger.Env)
-	defer logg.Flush()
+	logg, err := logger.New(logFile, config.Logger.Level, config.Logger.Formatter)
 	if err != nil {
 		log.Fatalf("Failed to create logger: %s", err)
 	}
