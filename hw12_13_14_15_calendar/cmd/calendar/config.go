@@ -10,8 +10,9 @@ type Config struct {
 }
 
 type LoggerConf struct {
-	Env  string
-	File string
+	Level     string
+	File      string
+	Formatter string
 }
 
 const (

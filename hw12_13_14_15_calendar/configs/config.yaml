@@ -1,6 +1,7 @@
 logger:
-  env: dev
+  level: debug
   file: logs/app.log
+  formatter: text
 storage:
   type: memory
   dsn: postgres://calendar:calendar@localhost:5434/calendar

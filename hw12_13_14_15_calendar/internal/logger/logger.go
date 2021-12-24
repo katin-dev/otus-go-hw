@@ -3,65 +3,70 @@ package logger
 import (
 	"fmt"
 	"net/http"
-	"time"
+	"os"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-)
-
-const (
-	ENV_PROD = "prod"
-	ENV_DEV  = "dev"
+	"github.com/sirupsen/logrus"
 )
 
 type Logger struct {
 	file string
-	logg *zap.SugaredLogger
+	logg *logrus.Logger
 }
 
-func New(file, env string) (*Logger, error) {
-	var cfg zap.Config
+func New(file, level, formatter string) (*Logger, error) {
+	log := logrus.New()
 
-	switch env {
-	case ENV_PROD:
-		cfg = zap.NewProductionConfig()
-	case ENV_DEV:
-		cfg = zap.NewDevelopmentConfig()
+	switch file {
+	case "stdout":
+		log.SetOutput(os.Stdout)
+	case "stderr":
+		log.SetOutput(os.Stderr)
 	default:
-		return nil, fmt.Errorf("env '%s' must be one of [dev, prod]", env)
+		file, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err == nil {
+			log.SetOutput(file)
+		} else {
+			return nil, fmt.Errorf("invalid log filename: %w", err)
+		}
 	}
 
-	cfg.OutputPaths = []string{file}
-	cfg.EncoderConfig.TimeKey = "timestamp"
-	cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
-
-	zapLogger, err := cfg.Build()
+	levelID, err := logrus.ParseLevel(level)
 	if err != nil {
 		return nil, err
+	}
+	log.SetLevel(levelID)
+
+	switch formatter {
+	case "json":
+		log.SetFormatter(&logrus.JSONFormatter{})
+	case "text_simple":
+		log.SetFormatter(&SimpleTextFormatter{})
+	default:
+		log.SetFormatter(&logrus.TextFormatter{})
 	}
 
 	logger := &Logger{
 		file: file,
-		logg: zapLogger.Sugar(),
+		logg: log,
 	}
 
 	return logger, nil
 }
 
 func (l *Logger) Debug(msg string, params ...interface{}) {
-	l.logg.Debugw(msg, params...)
+	l.logg.Debugf(msg, params...)
 }
 
 func (l *Logger) Info(msg string, params ...interface{}) {
-	l.logg.Infow(msg, params...)
+	l.logg.Infof(msg, params...)
 }
 
 func (l *Logger) Warn(msg string, params ...interface{}) {
-	l.logg.Warnw(msg, params...)
+	l.logg.Warnf(msg, params...)
 }
 
 func (l *Logger) Error(msg string, params ...interface{}) {
-	l.logg.Errorw(msg, params...)
+	l.logg.Errorf(msg, params...)
 }
 
 func (l *Logger) LogHttpRequest(r *http.Request, code, length int) {
@@ -77,6 +82,10 @@ func (l *Logger) LogHttpRequest(r *http.Request, code, length int) {
 	)
 }
 
-func (l *Logger) Flush() {
-	l.logg.Sync()
+type SimpleTextFormatter struct{}
+
+func (f *SimpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	msg := fmt.Sprintf("%s\t%s\n", entry.Level, entry.Message)
+
+	return []byte(msg), nil
 }
