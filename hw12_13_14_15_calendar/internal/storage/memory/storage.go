@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/google/uuid"
@@ -42,11 +43,25 @@ func (s *Storage) Delete(id uuid.UUID) error {
 	return nil
 }
 
+func (s *Storage) FindOne(id uuid.UUID) (*app.Event, error) {
+	for _, v := range s.events {
+		if v.ID == id {
+			return &v, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (s *Storage) FindAll() ([]app.Event, error) {
 	events := make([]app.Event, 0, len(s.events))
 	for _, v := range s.events {
 		events = append(events, v)
 	}
+
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].Dt.Unix() < events[j].Dt.Unix()
+	})
 
 	return events, nil
 }
