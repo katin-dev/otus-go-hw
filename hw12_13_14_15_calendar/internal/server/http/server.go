@@ -46,7 +46,7 @@ func (s *Server) handleHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	s.logger.Info("Start HTTP Server", "host", s.host, "port", s.port)
+	s.logger.Info("Start HTTP Server on %s:%d", s.host, s.port)
 	err := s.server.ListenAndServe()
 	if err != nil {
 		return err

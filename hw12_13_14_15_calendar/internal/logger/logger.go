@@ -18,10 +18,13 @@ func New(file, level, formatter string) (*Logger, error) {
 
 	switch file {
 	case "stdout":
+		fmt.Println("Stdout!")
 		log.SetOutput(os.Stdout)
 	case "stderr":
+		fmt.Println("Stderr!")
 		log.SetOutput(os.Stderr)
 	default:
+		fmt.Println("File: ", file)
 		fd, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 		if err != nil {
 			return nil, fmt.Errorf("invalid log filename: %w", err)
@@ -71,7 +74,7 @@ func (l *Logger) Error(msg string, params ...interface{}) {
 
 func (l *Logger) LogHTTPRequest(r *http.Request, code, length int) {
 	l.logg.Infof(
-		"%s\t%s\t%s\t%s\t%d\t%d\t\"%s\"",
+		"%s %s %s %s %d %d %q",
 		r.RemoteAddr,
 		r.Method,
 		r.URL.String(),

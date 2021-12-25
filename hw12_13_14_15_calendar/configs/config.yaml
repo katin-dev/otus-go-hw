@@ -1,6 +1,6 @@
 logger:
   level: debug
-  file: logs/app.log
+  file: stderr
   formatter: text
 storage:
   type: memory

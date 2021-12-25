@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -39,13 +38,7 @@ func main() {
 		log.Fatalf("Failed to read config: %s", err)
 	}
 
-	// Init: Logger
-	logFile, err := filepath.Abs(config.Logger.File)
-	if err != nil {
-		log.Fatalf("Invalid log file name: %s: %s", config.Logger.File, err)
-	}
-
-	logg, err := logger.New(logFile, config.Logger.Level, config.Logger.Formatter)
+	logg, err := logger.New(config.Logger.File, config.Logger.Level, config.Logger.Formatter)
 	if err != nil {
 		log.Fatalf("Failed to create logger: %s", err)
 	}
@@ -92,7 +85,7 @@ func loadConfig(configPath string) (*Config, error) {
 	}
 
 	cfg := NewConfig()
-	err = yaml.Unmarshal(content, cfg)
+	err = yaml.Unmarshal(content, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read yaml: %w", err)
 	}
