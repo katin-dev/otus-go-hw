@@ -8,27 +8,27 @@ import (
 )
 
 var (
-	ErrDateBusy      error = errors.New("date is already occupied")
-	ErrRequiredField error = errors.New("required field")
+	ErrDateBusy      = errors.New("date is already occupied")
+	ErrRequiredField = errors.New("required field")
 )
 
 type Event struct {
-	Id           uuid.UUID
+	ID           uuid.UUID
 	Title        string
 	Dt           time.Time
 	Duration     time.Duration
 	Description  string
-	UserId       string
+	UserID       string
 	NotifyBefore time.Duration
 }
 
-func NewEvent(title string, dt time.Time, duration time.Duration, userId string) *Event {
+func NewEvent(title string, dt time.Time, duration time.Duration, userID string) *Event {
 	id, _ := uuid.NewRandom()
 	return &Event{
-		Id:       id,
+		ID:       id,
 		Title:    title,
 		Dt:       dt,
 		Duration: duration,
-		UserId:   userId,
+		UserID:   userID,
 	}
 }

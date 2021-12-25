@@ -50,24 +50,23 @@ func main() {
 		log.Fatalf("Failed to create logger: %s", err)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
 	// Init: Storage
 	var storage app.Storage
 	switch config.Storage.Type {
-	case STORAGE_MEMORY:
+	case StorageMem:
 		storage = memorystorage.New()
-	case STORAGE_SQL:
+	case StorageSQL:
 		storage = sqlstorage.New(ctx, config.Storage.Dsn)
 	default:
 		log.Fatalf("Unknown storage type: %s\n", config.Storage.Type)
 	}
+	defer cancel()
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, config.Http.Host, config.Http.Port)
+	server := internalhttp.NewServer(logg, calendar, config.HTTP.Host, config.HTTP.Port)
 
 	go func() {
 		<-ctx.Done()
@@ -83,21 +82,20 @@ func main() {
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
-		os.Exit(1) //nolint:gocritic
 	}
 }
 
 func loadConfig(configPath string) (*Config, error) {
 	content, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read config %s: %s", configPath, err)
+		return nil, fmt.Errorf("failed to read config %s: %w", configPath, err)
 	}
 
-	cfg := &Config{}
+	cfg := NewConfig()
 	err = yaml.Unmarshal(content, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read yaml: %s", err)
+		return nil, fmt.Errorf("failed to read yaml: %w", err)
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }

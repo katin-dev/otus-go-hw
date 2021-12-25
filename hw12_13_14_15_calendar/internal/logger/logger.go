@@ -22,12 +22,12 @@ func New(file, level, formatter string) (*Logger, error) {
 	case "stderr":
 		log.SetOutput(os.Stderr)
 	default:
-		file, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err == nil {
-			log.SetOutput(file)
-		} else {
+		fd, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
+		if err != nil {
 			return nil, fmt.Errorf("invalid log filename: %w", err)
 		}
+
+		log.SetOutput(fd)
 	}
 
 	levelID, err := logrus.ParseLevel(level)
@@ -69,7 +69,7 @@ func (l *Logger) Error(msg string, params ...interface{}) {
 	l.logg.Errorf(msg, params...)
 }
 
-func (l *Logger) LogHttpRequest(r *http.Request, code, length int) {
+func (l *Logger) LogHTTPRequest(r *http.Request, code, length int) {
 	l.logg.Infof(
 		"%s\t%s\t%s\t%s\t%d\t%d\t\"%s\"",
 		r.RemoteAddr,

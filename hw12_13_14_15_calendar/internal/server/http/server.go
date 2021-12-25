@@ -16,7 +16,7 @@ type Server struct {
 
 type Logger interface {
 	Info(msg string, params ...interface{})
-	LogHttpRequest(r *http.Request, code, length int)
+	LogHTTPRequest(r *http.Request, code, length int)
 }
 
 type Application interface{}
@@ -31,7 +31,7 @@ func NewServer(logger Logger, app Application, host string, port int) *Server {
 
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort(host, strconv.Itoa(port)),
-		Handler: loggingMiddleware(http.HandlerFunc(myServer.handleHttp), logger),
+		Handler: loggingMiddleware(http.HandlerFunc(myServer.handleHTTP), logger),
 	}
 
 	myServer.server = httpServer
@@ -39,7 +39,7 @@ func NewServer(logger Logger, app Application, host string, port int) *Server {
 	return myServer
 }
 
-func (s *Server) handleHttp(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleHTTP(w http.ResponseWriter, r *http.Request) {
 	msg := []byte("Hello, world!\n")
 	w.WriteHeader(200)
 	w.Write(msg)

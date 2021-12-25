@@ -27,6 +27,6 @@ func loggingMiddleware(next http.Handler, log Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		myWriter := &ResponseWriter{w, 0, 0}
 		next.ServeHTTP(myWriter, r)
-		log.LogHttpRequest(r, myWriter.StatusCode, myWriter.BytesLength)
+		log.LogHTTPRequest(r, myWriter.StatusCode, myWriter.BytesLength)
 	})
 }

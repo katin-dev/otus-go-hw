@@ -6,7 +6,7 @@ package main
 type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
-	Http    HttpConf
+	HTTP    HTTPConf
 }
 
 type LoggerConf struct {
@@ -16,8 +16,8 @@ type LoggerConf struct {
 }
 
 const (
-	STORAGE_MEMORY = "memory"
-	STORAGE_SQL    = "sql"
+	StorageMem = "memory"
+	StorageSQL = "sql"
 )
 
 type StorageConf struct {
@@ -25,7 +25,7 @@ type StorageConf struct {
 	Dsn  string
 }
 
-type HttpConf struct {
+type HTTPConf struct {
 	Host string
 	Port int
 }

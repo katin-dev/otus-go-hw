@@ -40,7 +40,6 @@ func (s *Storage) Close(ctx context.Context) error {
 }
 
 func (s *Storage) Create(e app.Event) error {
-	var sql string
 	/* sql := "SELECT * FROM events WHERE date = $1 AND user_id = $1"
 	row := s.conn.QueryRow(s.ctx, sql, e.Dt.Unix(), e.UserId)
 	if err := row.Scan(); err != nil {
@@ -50,15 +49,37 @@ func (s *Storage) Create(e app.Event) error {
 		}
 	} */
 
-	sql = "INSERT INTO events(id, title, date, duration, description, user_id, notify_before) VALUES ($1, $2, $3, $4, $5, $6, $7)"
-	_, err := s.conn.Exec(s.ctx, sql, e.Id.String(), e.Title, e.Dt.Format(time.RFC3339), e.Duration.Seconds(), e.Description, e.UserId, e.NotifyBefore.Seconds())
+	sql := `INSERT INTO 
+				events(id, title, date, duration, description, user_id, notify_before) 
+				VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	_, err := s.conn.Exec(
+		s.ctx,
+		sql,
+		e.ID.String(),
+		e.Title,
+		e.Dt.Format(time.RFC3339),
+		e.Duration.Seconds(),
+		e.Description,
+		e.UserID,
+		e.NotifyBefore.Seconds(),
+	)
 
 	return err
 }
 
 func (s *Storage) Update(e app.Event) error {
 	sql := "UPDATE events SET title=$1, date = $2, duration=$3, description=$4, user_id=$5, notify_before=$6 WHERE id = $7"
-	_, err := s.conn.Exec(s.ctx, sql, e.Title, e.Dt.Format(time.RFC3339), e.Duration.Seconds(), e.Description, e.UserId, e.NotifyBefore.Seconds(), e.Id.String())
+	_, err := s.conn.Exec(
+		s.ctx,
+		sql,
+		e.Title,
+		e.Dt.Format(time.RFC3339),
+		e.Duration.Seconds(),
+		e.Description,
+		e.UserID,
+		e.NotifyBefore.Seconds(),
+		e.ID.String(),
+	)
 
 	return err
 }
@@ -83,7 +104,15 @@ func (s *Storage) FindAll() ([]app.Event, error) {
 	for rows.Next() {
 		var e app.Event
 		var durationSeconds, notifyBeforeSeconds int
-		if err := rows.Scan(&e.Id, &e.Title, &e.Dt, &durationSeconds, &e.Description, &e.UserId, &notifyBeforeSeconds); err != nil {
+		if err := rows.Scan(
+			&e.ID,
+			&e.Title,
+			&e.Dt,
+			&durationSeconds,
+			&e.Description,
+			&e.UserID,
+			&notifyBeforeSeconds,
+		); err != nil {
 			return nil, fmt.Errorf("failed to scan SQL result into struct: %w", err)
 		}
 

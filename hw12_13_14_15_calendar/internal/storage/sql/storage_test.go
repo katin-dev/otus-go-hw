@@ -13,15 +13,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const APP_CONF_FILE = "configs/config.yaml"
+const AppConfFile = "configs/config.yaml"
 
 func TestStorage(t *testing.T) {
 	// Этот тест чисто для себя, в ci гонять его не надо:
-	if _, err := os.Stat(APP_CONF_FILE); errors.Is(err, os.ErrNotExist) {
-		t.Skip(APP_CONF_FILE + " file does not exists")
+	if _, err := os.Stat(AppConfFile); errors.Is(err, os.ErrNotExist) {
+		t.Skip(AppConfFile + " file does not exists")
 	}
 
-	cfgContent, _ := os.ReadFile(APP_CONF_FILE)
+	cfgContent, _ := os.ReadFile(AppConfFile)
 	var cfg struct {
 		Storage struct {
 			Dsn string
@@ -44,10 +44,10 @@ func TestStorage(t *testing.T) {
 			DeferrableMode: pgx.NotDeferrable,
 		})
 
-		userId := "3b6394b3-acc6-4fd5-b8ce-3cbdf30745ef"
+		userID := "3b6394b3-acc6-4fd5-b8ce-3cbdf30745ef"
 		dt, _ := time.Parse("2006-01-02 15:04:05", "2021-01-01 12:00:00")
 
-		event := app.NewEvent("Test Event", dt, time.Minute*30, userId)
+		event := app.NewEvent("Test Event", dt, time.Minute*30, userID)
 		event.Description = "OTUS GoLang Lesson"
 		event.NotifyBefore = time.Minute * 15
 
@@ -84,7 +84,7 @@ func TestStorage(t *testing.T) {
 		require.Equal(t, *event, saved[0])
 
 		// Удаляем объект
-		s.Delete(event.Id)
+		s.Delete(event.ID)
 
 		saved, _ = s.FindAll()
 		require.Len(t, saved, 0)

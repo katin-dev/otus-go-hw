@@ -21,7 +21,7 @@ func New() *Storage {
 func (s *Storage) Create(e app.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.events[e.Id] = e
+	s.events[e.ID] = e
 
 	return nil
 }
@@ -29,7 +29,7 @@ func (s *Storage) Create(e app.Event) error {
 func (s *Storage) Update(e app.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.events[e.Id] = e
+	s.events[e.ID] = e
 
 	return nil
 }
