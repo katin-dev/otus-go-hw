@@ -24,12 +24,8 @@ type ValidationError struct {
 
 type ValidationErrors []ValidationError
 
-func (v ValidationErrors) Length() int {
-	return len(v)
-}
-
 func (v ValidationErrors) Error() string {
-	messages := make([]string, 0)
+	messages := make([]string, 0, len(v))
 	for _, err := range v {
 		messages = append(messages, err.Err.Error())
 	}
@@ -37,7 +33,7 @@ func (v ValidationErrors) Error() string {
 }
 
 func Validate(v interface{}) error {
-	errors := make(ValidationErrors, 0)
+	var validationErrors ValidationErrors
 
 	vType := reflect.TypeOf(v)
 	vValue := reflect.ValueOf(v)
@@ -68,19 +64,20 @@ func Validate(v interface{}) error {
 		for _, validator := range validators {
 			if f.Type.Kind() == reflect.Slice {
 				for j := 0; j < vValue.Field(i).Len(); j++ {
-					validateField(f.Name+"."+strconv.Itoa(j), vValue.Field(i).Index(j), validator, &errors)
+					fieldFullName := fmt.Sprintf("%s.%d", f.Name, j)
+					validateField(fieldFullName, vValue.Field(i).Index(j), validator, &validationErrors)
 				}
 			} else {
-				validateField(f.Name, v, validator, &errors)
+				validateField(f.Name, v, validator, &validationErrors)
 			}
 		}
 	}
 
-	if errors.Length() == 0 {
+	if len(validationErrors) == 0 {
 		return nil
 	}
 
-	return errors
+	return validationErrors
 }
 
 func validateField(name string, v reflect.Value, validator Validator, errorBucket *ValidationErrors) {
@@ -98,27 +95,33 @@ func validateField(name string, v reflect.Value, validator Validator, errorBucke
 func isAllowedType(t reflect.Type) bool {
 	return t.Kind() == reflect.Int ||
 		t.Kind() == reflect.String ||
-		t == reflect.SliceOf(reflect.TypeOf("")) ||
-		t == reflect.SliceOf(reflect.TypeOf(1)) ||
+		t == reflect.SliceOf(reflect.TypeOf("")) || // SliceOf(string)
+		t == reflect.SliceOf(reflect.TypeOf(1)) || // SliceOf(int)
 		t.Kind() == reflect.Struct
 }
 
 func parseTag(tag string) ([]Validator, error) {
-	validators := make([]Validator, 0)
+	var validators []Validator
 
 	parts := strings.Split(tag, "|")
 	for _, part := range parts {
 		optionParts := strings.Split(part, ":")
 
 		if len(optionParts) == 0 {
-			return nil, fmt.Errorf("failed to parse validator: " + part)
+			return nil, fmt.Errorf("failed to parse validator: %s", part)
 		}
 
-		validatorName := optionParts[0]
+		var (
+			validatorName   string
+			validatorOption string
+		)
 
-		validatorOptionString := ""
+		if len(optionParts) > 0 {
+			validatorName = optionParts[0]
+		}
+
 		if len(optionParts) > 1 {
-			validatorOptionString = optionParts[1]
+			validatorOption = strings.TrimSpace(optionParts[1])
 		}
 
 		var validator Validator
@@ -126,17 +129,17 @@ func parseTag(tag string) ([]Validator, error) {
 
 		switch validatorName {
 		case "len":
-			validator, err = NewStrLenValidator(validatorOptionString)
+			validator, err = NewStrLenValidator(validatorOption)
 		case "min":
-			validator, err = NewNumMinValidator(validatorOptionString)
+			validator, err = NewNumMinValidator(validatorOption)
 		case "max":
-			validator, err = NewNumMaxValidator(validatorOptionString)
+			validator, err = NewNumMaxValidator(validatorOption)
 		case "regexp":
-			validator, err = NewRegExpValidator(validatorOptionString)
+			validator, err = NewRegExpValidator(validatorOption)
 		case "in":
-			validator, err = NewStrEnumValidator(validatorOptionString)
+			validator, err = NewStrEnumValidator(validatorOption)
 		case "nested":
-			validator, err = NewNestedValidator(validatorOptionString)
+			validator, err = NewNestedValidator(validatorOption)
 		default:
 			validator = nil
 		}
@@ -162,8 +165,6 @@ type StrLenValidator struct {
 }
 
 func NewStrLenValidator(options string) (*StrLenValidator, error) {
-	options = strings.TrimSpace(options)
-
 	var (
 		length int
 		err    error
@@ -190,8 +191,6 @@ type NumMinvalidator struct {
 }
 
 func NewNumMinValidator(options string) (*NumMinvalidator, error) {
-	options = strings.TrimSpace(options)
-
 	var (
 		num int
 		err error
@@ -217,8 +216,6 @@ type NumMaxValidator struct {
 }
 
 func NewNumMaxValidator(options string) (*NumMaxValidator, error) {
-	options = strings.TrimSpace(options)
-
 	var (
 		num int
 		err error
@@ -244,8 +241,6 @@ type RegExpValidator struct {
 }
 
 func NewRegExpValidator(options string) (*RegExpValidator, error) {
-	options = strings.TrimSpace(options)
-
 	re, err := regexp.Compile(options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse regexp: %w", err)
@@ -269,8 +264,6 @@ type StrEnumValidator struct {
 }
 
 func NewStrEnumValidator(options string) (*StrEnumValidator, error) {
-	options = strings.TrimSpace(options)
-
 	return &StrEnumValidator{strings.Split(options, ",")}, nil
 }
 
