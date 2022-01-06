@@ -32,3 +32,10 @@ func NewEvent(title string, dt time.Time, duration time.Duration, userID string)
 		UserID:   userID,
 	}
 }
+
+type Notification struct {
+	EventID uuid.UUID
+	Title   string
+	Dt      time.Time
+	UserID  string
+}
