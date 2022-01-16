@@ -18,10 +18,8 @@ func New(file, level, formatter string) (*Logger, error) {
 
 	switch file {
 	case "stdout":
-		fmt.Println("Stdout!")
 		log.SetOutput(os.Stdout)
 	case "stderr":
-		fmt.Println("Stderr!")
 		log.SetOutput(os.Stderr)
 	default:
 		fmt.Println("File: ", file)

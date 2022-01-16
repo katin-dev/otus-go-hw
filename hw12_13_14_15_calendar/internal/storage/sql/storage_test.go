@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/app"
+	"github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -32,7 +33,8 @@ func TestStorage(t *testing.T) {
 
 	ctx := context.Background()
 
-	s := New(ctx, cfg.Storage.Dsn)
+	logg, _ := logger.New("stderr", "info", "text")
+	s := New(ctx, cfg.Storage.Dsn, logg)
 	if err := s.Connect(ctx); err != nil {
 		t.Fatal("Failed to connect to DB server", err)
 	}

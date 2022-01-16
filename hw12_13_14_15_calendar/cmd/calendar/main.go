@@ -12,6 +12,7 @@ import (
 
 	"github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/app"
 	"github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/storage/sql"
@@ -51,7 +52,9 @@ func main() {
 	case StorageMem:
 		storage = memorystorage.New()
 	case StorageSQL:
-		storage = sqlstorage.New(ctx, config.Storage.Dsn)
+		sqlStorage := sqlstorage.New(ctx, config.Storage.Dsn, logg)
+		sqlStorage.Connect(ctx)
+		storage = sqlStorage
 	default:
 		log.Fatalf("Unknown storage type: %s\n", config.Storage.Type)
 	}
@@ -59,8 +62,19 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
+	serverGrpc := internalgrpc.NewServer(config.GRPC.Port, calendar, logg)
+
+	// Осторожно завершаем работу HTTP сервера
+	go func() {
+		<-ctx.Done()
+		serverGrpc.Stop()
+	}()
+
+	go serverGrpc.Start()
+
 	server := internalhttp.NewServer(logg, calendar, config.HTTP.Host, config.HTTP.Port)
 
+	// Осторожно завершаем работу HTTP сервера
 	go func() {
 		<-ctx.Done()
 
@@ -68,14 +82,17 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logg.Error("Failed to stop http server: " + err.Error())
 		}
 	}()
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-	}
+	go func() {
+		if err := server.Start(ctx); err != nil {
+			logg.Error("Failed to start http server: " + err.Error())
+		}
+	}()
+
+	<-ctx.Done()
 }
 
 func loadConfig(configPath string) (*Config, error) {
