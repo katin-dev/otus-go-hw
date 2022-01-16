@@ -154,10 +154,15 @@ func ParseRequest(r *http.Request, dto interface{}) error {
 }
 
 func RespondError(w http.ResponseWriter, code int, err error) {
-	data, _ := json.Marshal(ErrorDto{
+	data, err := json.Marshal(ErrorDto{
 		false,
 		err.Error(),
 	})
+	if err != nil {
+		// Надо бы в лог записать по-хорошему-то
+		w.WriteHeader(500)
+		w.Write([]byte("Failed to marshall error dto"))
+	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)

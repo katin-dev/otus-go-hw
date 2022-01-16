@@ -68,13 +68,14 @@ func (s *Server) Stop() {
 	s.grpcSrv.GracefulStop()
 }
 
-func (s *Server) Create(ctx context.Context, in *CreateEventRequest) (*EventResponse, error) { // nolint:dupl
-	appEvent := application.Event{}
-	appEvent.Title = in.GetTitle()
-	appEvent.Duration = time.Second * time.Duration(in.GetDuration())
-	appEvent.Description = in.GetDescription()
-	appEvent.UserID = in.GetUserId()
-	appEvent.NotifyBefore = time.Second * time.Duration(in.GetNotifyBeforeSeconds())
+func (s *Server) Create(ctx context.Context, in *Event) (*EventResponse, error) { // nolint:dupl
+	appEvent := application.Event{
+		Title:        in.GetTitle(),
+		Duration:     time.Second * time.Duration(in.GetDuration()),
+		Description:  in.GetDescription(),
+		UserID:       in.GetUserId(),
+		NotifyBefore: time.Second * time.Duration(in.GetNotifyBeforeSeconds()),
+	}
 
 	id, err := uuid.Parse(in.GetId())
 	if err != nil {
@@ -95,13 +96,14 @@ func (s *Server) Create(ctx context.Context, in *CreateEventRequest) (*EventResp
 	return ResponseSuccess(), nil
 }
 
-func (s *Server) Update(ctx context.Context, in *UpdateEventRequest) (*EventResponse, error) { // nolint:dupl
-	appEvent := application.Event{}
-	appEvent.Title = in.GetTitle()
-	appEvent.Duration = time.Second * time.Duration(in.GetDuration())
-	appEvent.Description = in.GetDescription()
-	appEvent.UserID = in.GetUserId()
-	appEvent.NotifyBefore = time.Second * time.Duration(in.GetNotifyBeforeSeconds())
+func (s *Server) Update(ctx context.Context, in *Event) (*EventResponse, error) { // nolint:dupl
+	appEvent := application.Event{
+		Title:        in.GetTitle(),
+		Duration:     time.Second * time.Duration(in.GetDuration()),
+		Description:  in.GetDescription(),
+		UserID:       in.GetUserId(),
+		NotifyBefore: time.Second * time.Duration(in.GetNotifyBeforeSeconds()),
+	}
 
 	id, err := uuid.Parse(in.GetId())
 	if err != nil {
@@ -169,7 +171,6 @@ func (s *Server) EventListMonth(ctx context.Context, in *EventListRequest) (*Eve
 		return nil, fmt.Errorf("invalid date value. Expected yyyy-mm-dd, got %s", in.GetDate())
 	}
 
-	// @TODO надо как-то правильно прибавить месяц (30 или 31 день)
 	events, err := s.app.GetEventsByMonth(ctx, dt)
 	if err != nil {
 		return nil, err
