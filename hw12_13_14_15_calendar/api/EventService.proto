@@ -6,8 +6,8 @@ package event;
 option go_package = "./;internalgrpc";
 
 service EventService {
-    rpc Create(CreateEventRequest) returns (EventResponse);
-    rpc Update(UpdateEventRequest) returns (EventResponse);
+    rpc Create(Event) returns (EventResponse);
+    rpc Update(Event) returns (EventResponse);
     rpc Delete(DeleteEventRequest) returns (EventResponse);
     rpc EventListDay(EventListRequest) returns (EventListResponse);
     rpc EventListWeek(EventListRequest) returns (EventListResponse);
@@ -15,26 +15,6 @@ service EventService {
 }
 
 message Event {
-    string id = 1;
-	string title = 2;
-	string date = 3;
-	uint32 duration = 4;
-	string description = 5;
-	string user_id = 6;
-	uint32 notify_before_seconds = 7;
-}
-
-message CreateEventRequest {
-    string id = 1;
-	string title = 2;
-	string date = 3;
-	uint32 duration = 4;
-	string description = 5;
-	string user_id = 6;
-	uint32 notify_before_seconds = 7;
-}
-
-message UpdateEventRequest {
     string id = 1;
 	string title = 2;
 	string date = 3;
