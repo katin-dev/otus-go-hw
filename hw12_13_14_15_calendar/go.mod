@@ -7,8 +7,10 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
+	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816 // indirect
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
