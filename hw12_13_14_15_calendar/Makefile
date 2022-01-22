@@ -41,4 +41,7 @@ migrate:
 generate: 
 	go generate ./...
 
+up:
+	docker-compose up -d
+
 .PHONY: build run build-img run-img version test lint

@@ -1,6 +1,9 @@
 # Собираем в гошке
 FROM golang:1.16.2 as build
 
+ENV CGO_ENABLED=0
+RUN go install github.com/antelman107/net-wait-go@latest
+
 ENV BIN_FILE /opt/calendar/calendar-app
 ENV CODE_DIR /go/src/
 
@@ -29,5 +32,6 @@ LABEL MAINTAINERS="katin.dev@gmail.com"
 
 ENV BIN_FILE "/opt/calendar/calendar-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
+COPY --from=build /go/bin/net-wait-go /bin/net-wait-go
 
 CMD ${BIN_FILE}

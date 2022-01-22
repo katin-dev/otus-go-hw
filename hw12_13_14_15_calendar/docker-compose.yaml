@@ -1,11 +1,11 @@
 version: '3.4'
 services:
-  app: 
+  app:
     build:
       context: .
-      dockerfile: ./build/Dockerfile
+      dockerfile: ./build/calendar/Dockerfile
     depends_on:
-      - migrations
+      - db
     ports:
       - "8012:80"
       - "8013:8080"
@@ -14,9 +14,38 @@ services:
       - LOG_FILE=$LOG_FILE
       - LOG_FORMAT=$LOG_FORMAT
       - STORAGE_DSN=postgres://calendar:calendar@db:5432/calendar
-      - QUEUE_DSN=amqp://guest:guest@queue:5673/
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./build/scheduler/Dockerfile
+    depends_on:
+      - db
+    environment:
+      - LOG_LEVEL=$LOG_LEVEL
+      - LOG_FILE=$LOG_FILE
+      - LOG_FORMAT=$LOG_FORMAT
+      - STORAGE_DSN=postgres://calendar:calendar@db:5432/calendar
+      - QUEUE_DSN=amqp://guest:guest@queue:5672/
       - RABBIT_QUEUE=event_notifications
       - RABBIT_EXCHANGE=calendar
+    command: ["/bin/sh", "-c", "net-wait-go -addrs queue:5672 && /opt/calendar/sheduler"]
+
+  sender:
+    build:
+      context: .
+      dockerfile: ./build/sender/Dockerfile
+    depends_on:
+      - db
+    environment:
+      - LOG_LEVEL=$LOG_LEVEL
+      - LOG_FILE=$LOG_FILE
+      - LOG_FORMAT=$LOG_FORMAT
+      - STORAGE_DSN=postgres://calendar:calendar@db:5432/calendar
+      - QUEUE_DSN=amqp://guest:guest@queue:5672/
+      - RABBIT_QUEUE=event_notifications
+      - RABBIT_EXCHANGE=calendar
+    command: ["/bin/sh", "-c", "net-wait-go -addrs queue:5672 && /opt/calendar/sender"]
   
   db:
     image: postgres:latest
