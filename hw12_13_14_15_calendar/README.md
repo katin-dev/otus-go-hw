@@ -21,3 +21,25 @@
  - отправить Уведомление в очередь
  - очистить старые события (более 1 года)
 
+
+ ## Переменные окружения
+|Название|Пример|Описание|
+|--------|------|--------|
+|LOG_LEVEL|`debug`|`[panic, fatal, error, warn, info, debug]`|
+|LOG_FILE|`stderr`|Абсолютный путь к файлу или `[stderr|stdout]`|
+|LOG_FORMAT|`text`|`[text|json]`|
+|STORAGE_TYPE|`sql`|`[sql|memory]`|
+|STORAGE_DSN|`postgres://calendar:calendar@localhost:5434/calendar`|Можно использовать `memory://` для хранения в памяти|
+|HTTP_HOST|`0.0.0.0`||
+|HTTP_PORT|`80`||
+|GRPC_HOST=|`0.0.0.0`||
+|GRPC_PORT|`8080`||
+|QUEUE_DSN|`amqp://guest:guest@rabbit:5673/`|Подключение к очереди сообщений|
+|RABBIT_QUEUE|`event_notifications`|Название очереди в RabbitMQ|
+|RABBIT_EXCHANGE|`calendar`|Название exchange в RabbitMQ|
+
+
+```
+docker-compose up -d
+docker-compose up migrations
+```

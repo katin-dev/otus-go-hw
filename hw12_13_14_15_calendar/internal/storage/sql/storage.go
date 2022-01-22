@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,8 +30,7 @@ func New(ctx context.Context, dsn string, logg app.Logger) *Storage {
 func (s *Storage) Connect(ctx context.Context) error {
 	conn, err := pgx.Connect(ctx, s.dsn)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	s.conn = conn
 

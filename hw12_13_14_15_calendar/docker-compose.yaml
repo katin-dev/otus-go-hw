@@ -1,16 +1,40 @@
-version: '3'
+version: '3.4'
 services:
+  app: 
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
+    depends_on:
+      - migrations
+    ports:
+      - "8012:80"
+      - "8013:8080"
+    environment:
+      - LOG_LEVEL=$LOG_LEVEL
+      - LOG_FILE=$LOG_FILE
+      - LOG_FORMAT=$LOG_FORMAT
+      - STORAGE_DSN=postgres://calendar:calendar@db:5432/calendar
+      - QUEUE_DSN=amqp://guest:guest@queue:5673/
+      - RABBIT_QUEUE=event_notifications
+      - RABBIT_EXCHANGE=calendar
+  
   db:
     image: postgres:latest
-    ports:
-      - "5434:5432"
     environment:
       - POSTGRES_USER=calendar
       - POSTGRES_PASSWORD=calendar
       - POSTGRES_DB=calendar
 
-  rabbit: 
+  migrations:
+    build:
+      context: .
+      dockerfile: ./build/migrations/Dockerfile
+    depends_on:
+      - db
+    environment:
+      - GOOSE_DRIVER=postgres
+      - GOOSE_DBSTRING=postgres://calendar:calendar@db:5432/calendar?sslmode=disable
+    command: ["/bin/sh", "-c", "net-wait-go -addrs db:5432 && /bin/goose up"]
+
+  queue: 
     image: rabbitmq:3.9.11-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
