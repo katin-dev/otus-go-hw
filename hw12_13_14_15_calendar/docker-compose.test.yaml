@@ -74,4 +74,5 @@ services:
       dockerfile: ./build/tests/Dockerfile
     environment:
       - APP_HOST=http://app
+      - APP_HOST_GRPC=app:8080
     command: ["/bin/sh", "-c", "net-wait-go -addrs app:80 && go test github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/cmd/calendar_tests"]

@@ -28,7 +28,7 @@ func ExtractEventID(events []app.Event) []string {
 	return res
 }
 
-func JsonRemarshalString(body string) string {
+func JSONRemarshalString(body string) string {
 	bytes := []byte(body)
 	var ifce interface{}
 	err := json.Unmarshal(bytes, &ifce)
