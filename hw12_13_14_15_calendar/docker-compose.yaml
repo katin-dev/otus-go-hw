@@ -63,7 +63,7 @@ services:
     environment:
       - GOOSE_DRIVER=postgres
       - GOOSE_DBSTRING=postgres://calendar:calendar@db:5432/calendar?sslmode=disable
-    command: ["/bin/sh", "-c", "net-wait-go -addrs db:5432 && /bin/goose up"]
+    command: ["/bin/sh", "-c", "net-wait-go -addrs db:5432 && sleep 5 && /bin/goose up"]
 
   queue: 
     image: rabbitmq:3.9.11-management

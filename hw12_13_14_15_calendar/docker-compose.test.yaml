@@ -72,4 +72,6 @@ services:
     build:
       context: .
       dockerfile: ./build/tests/Dockerfile
+    environment:
+      - APP_HOST=http://app
     command: ["/bin/sh", "-c", "net-wait-go -addrs app:80 && go test github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/cmd/calendar_tests"]
