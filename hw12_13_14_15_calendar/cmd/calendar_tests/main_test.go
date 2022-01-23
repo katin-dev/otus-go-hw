@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	internalgrpc "github.com/katin.dev/otus-go-hw/hw12_13_14_15_calendar/internal/server/grpc"
 	"github.com/stretchr/testify/assert"
@@ -20,13 +22,6 @@ import (
 // var http = baloo.New(os.Getenv("APP_HOST"))
 
 func TestMain(t *testing.T) {
-	/*
-		1. Дождаться когда сервис поднимится
-		2. CRUDL для HTTP
-		3. CRUDL для gRPC
-		4. Хз как проверить нотификацию
-	*/
-
 	host := os.Getenv("APP_HOST")
 
 	httpClient := http.Client{}
@@ -124,6 +119,20 @@ func TestMain(t *testing.T) {
 
 	bodyExpected = `[]`
 	require.Equal(t, bodyExpected, buf.String())
+
+	time.Sleep(time.Second * 10)
+	// Проверим, что было уведомление
+	logFileName := "/var/logs/app.log"
+	content, err := os.ReadFile(logFileName)
+	if err != nil {
+		t.Errorf("Failed to read sender logs")
+		t.FailNow()
+	}
+	contentString := string(content)
+
+	fmt.Println(contentString)
+
+	require.Contains(t, contentString, "4927aa58-a175-429a-a125-c04765597152")
 }
 
 var host = os.Getenv("APP_HOST_GRPC")
