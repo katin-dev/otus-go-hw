@@ -2,6 +2,7 @@ package internalhttp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -43,7 +44,11 @@ func (s *ServerHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = s.app.CreateEvent(r.Context(), *event)
 	if err != nil {
-		s.RespondError(w, http.StatusInternalServerError, err)
+		if errors.Is(err, app.ErrEventWithSuchIDAlreadyExists) {
+			s.RespondError(w, http.StatusBadRequest, err)
+		} else {
+			s.RespondError(w, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
@@ -82,7 +87,7 @@ func (s *ServerHandlers) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 
 	responseData, _ := json.Marshal(dto)
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	w.Write(responseData)
 }
 

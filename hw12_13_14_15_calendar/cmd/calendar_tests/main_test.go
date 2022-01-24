@@ -45,24 +45,33 @@ func TestMain(t *testing.T) {
 		"user_id": "b6a4fbfa-a9b2-429c-b0c5-20915c84e9ee",
 		"notify_before_seconds": 60
 	}`
-	bufWrite := bytes.NewBuffer([]byte(body))
 
-	res, err = httpClient.Post(host+"/events", "application/json", bufWrite) // nolint: noctx
+	respCode, _, err := RESTPost(&httpClient, host+"/events", body)
 	if err != nil {
 		t.Errorf("Failed to create /events: %s", err)
+		t.FailNow()
 	}
-	res.Body.Close()
+	require.Equal(t, 201, respCode)
 
-	res, err = httpClient.Get(host + "/events") // nolint: noctx
+	// Созданное событие можно прочитать в общем списке
+	resCode, resBody, err := RESTGet(&httpClient, host+"/events")
 	if err != nil {
 		t.Errorf("Failed to get /events: %s", err)
 	}
-	buf = strings.Builder{}
-	io.Copy(&buf, res.Body)
-	res.Body.Close()
 
 	bodyExpected := `[{"id":"4927aa58-a175-429a-a125-c04765597152","title":"Test Event 01","date":"2021-12-20 12:30:00","duration":60,"description":"Test Event Description 01","user_id":"b6a4fbfa-a9b2-429c-b0c5-20915c84e9ee","notify_before_seconds":60}]` // nolint:lll
-	require.Equal(t, bodyExpected, buf.String())
+	require.Equal(t, bodyExpected, resBody)
+	require.Equal(t, 200, resCode)
+
+	// Попробуем создать ещё одно такое же события - должны получить ОШИБКУ
+	respCode, respBody, err := RESTPost(&httpClient, host+"/events", body)
+	if err != nil {
+		t.Errorf("Failed to create /events: %s", err)
+		t.FailNow()
+	}
+	bodyExpected = `{"success":false,"error":"validation error: event with such id already exists"}`
+	require.Equal(t, bodyExpected, respBody)
+	require.Equal(t, 400, respCode)
 
 	// Обновим событие
 	body = `{
@@ -73,55 +82,43 @@ func TestMain(t *testing.T) {
 		"user_id": "b6a4fbfa-a9b2-429c-b0c5-20915c84e9ee",
 		"notify_before_seconds": 70
 	}`
-	bufWrite = bytes.NewBuffer([]byte(body))
-
-	req, err := http.NewRequest("PUT", host+"/events/4927aa58-a175-429a-a125-c04765597152", bufWrite) // nolint: noctx
+	respCode, _, err = RESTPut(&httpClient, host+"/events/4927aa58-a175-429a-a125-c04765597152", body)
 	if err != nil {
 		t.Errorf("Failed to update event: %s", err)
+		t.FailNow()
 	}
+	require.Equal(t, 200, respCode)
 
-	res, err = httpClient.Do(req)
-	if err != nil {
-		t.Errorf("Failed to update event: %s", err)
-	}
-	res.Body.Close()
-
-	res, err = httpClient.Get(host + "/events") // nolint: noctx
+	// Прочитаем обновления
+	respCode, respBody, err = RESTGet(&httpClient, host+"/events")
 	if err != nil {
 		t.Errorf("Failed to get /events: %s", err)
+		t.FailNow()
 	}
-	buf = strings.Builder{}
-	io.Copy(&buf, res.Body)
-	res.Body.Close()
-
 	bodyExpected = `[{"id":"4927aa58-a175-429a-a125-c04765597152","title":"Test Event 01 UPD","date":"2021-12-20 12:30:30","duration":70,"description":"Test Event Description 01 UPD","user_id":"b6a4fbfa-a9b2-429c-b0c5-20915c84e9ee","notify_before_seconds":70}]` // nolint:lll
-	require.Equal(t, bodyExpected, buf.String())
+	require.Equal(t, bodyExpected, respBody)
+	require.Equal(t, 200, respCode)
 
 	// Удалим событие
-	req, err = http.NewRequest("DELETE", host+"/events/4927aa58-a175-429a-a125-c04765597152", nil) // nolint: noctx
+	_, _, err = RESTDelete(&httpClient, host+"/events/4927aa58-a175-429a-a125-c04765597152")
 	if err != nil {
-		t.Errorf("Failed to delete event: %s", err)
+		t.Errorf("Failed to get /events: %s", err)
+		t.FailNow()
 	}
 
-	res, err = httpClient.Do(req)
-	if err != nil {
-		t.Errorf("Failed to delete event: %s", err)
-	}
-	res.Body.Close()
-
-	res, err = httpClient.Get(host + "/events") // nolint: noctx
+	// Удалённого события больше нет в списке
+	// Созданное событие можно прочитать в общем списке
+	respCode, respBody, err = RESTGet(&httpClient, host+"/events")
 	if err != nil {
 		t.Errorf("Failed to get /events: %s", err)
 	}
-	buf = strings.Builder{}
-	io.Copy(&buf, res.Body)
-	res.Body.Close()
 
 	bodyExpected = `[]`
-	require.Equal(t, bodyExpected, buf.String())
+	require.Equal(t, bodyExpected, respBody)
+	require.Equal(t, 200, respCode)
 
+	// Проверим, что было уведомление о нашем событии, так как мы его создали в прошлом
 	time.Sleep(time.Second * 10)
-	// Проверим, что было уведомление
 	logFileName := "/var/logs/app.log"
 	content, err := os.ReadFile(logFileName)
 	if err != nil {
@@ -165,4 +162,48 @@ func TestMainGrpc(t *testing.T) {
 	res, err := client.EventListMonth(ctx, &req)
 	assert.Nil(t, err)
 	assert.Len(t, res.GetEvents(), 1)
+}
+
+func RESTPost(httpClient *http.Client, url, body string) (int, string, error) {
+	return RESTWithPayload(httpClient, url, body, "POST")
+}
+
+func RESTPut(httpClient *http.Client, url, body string) (int, string, error) {
+	return RESTWithPayload(httpClient, url, body, "PUT")
+}
+
+func RESTDelete(httpClient *http.Client, url string) (int, string, error) {
+	return RESTWithPayload(httpClient, url, "", "DELETE")
+}
+
+func RESTWithPayload(httpClient *http.Client, url, body, method string) (int, string, error) {
+	bufWrite := bytes.NewBuffer([]byte(body))
+	req, err := http.NewRequest(method, url, bufWrite) // nolint: noctx
+	if err != nil {
+		return 0, "", err
+	}
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return 0, "", err
+	}
+	defer res.Body.Close()
+
+	resBuilder := strings.Builder{}
+	io.Copy(&resBuilder, res.Body)
+
+	return res.StatusCode, resBuilder.String(), nil
+}
+
+func RESTGet(httpClient *http.Client, url string) (int, string, error) {
+	res, err := httpClient.Get(url) // nolint: noctx
+	if err != nil {
+		return 0, "", err
+	}
+	defer res.Body.Close()
+
+	buf := strings.Builder{}
+	io.Copy(&buf, res.Body)
+
+	return res.StatusCode, buf.String(), nil
 }

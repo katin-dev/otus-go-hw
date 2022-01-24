@@ -14,6 +14,7 @@ services:
       - LOG_FILE=$LOG_FILE
       - LOG_FORMAT=$LOG_FORMAT
       - STORAGE_DSN=postgres://calendar:calendar@db:5432/calendar
+    command: ["/bin/sh", "-c", "net-wait-go -addrs db:5432 && /opt/calendar/calendar-app"]
 
   scheduler:
     build:
