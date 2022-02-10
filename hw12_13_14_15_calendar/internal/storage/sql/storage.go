@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,8 +30,7 @@ func New(ctx context.Context, dsn string, logg app.Logger) *Storage {
 func (s *Storage) Connect(ctx context.Context) error {
 	conn, err := pgx.Connect(ctx, s.dsn)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	s.conn = conn
 
@@ -181,8 +179,8 @@ func createEventsFromRows(rows pgx.Rows) ([]app.Event, error) {
 			e.Description = description.String
 		}
 
-		e.Duration = time.Duration(durationSeconds * 1000000000)
-		e.NotifyBefore = time.Duration(notifyBeforeSeconds * 1000000000)
+		e.Duration = time.Second * time.Duration(durationSeconds)
+		e.NotifyBefore = time.Second * time.Duration(notifyBeforeSeconds)
 
 		events = append(events, e)
 	}
